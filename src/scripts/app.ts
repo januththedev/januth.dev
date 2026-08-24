@@ -1,5 +1,5 @@
-import { $, prefersReducedMotion, showToast } from './lib/dom';
-import { cycleScramble } from './scramble';
+import { $, prefersReducedMotion, showToast, clamp } from './lib/dom';
+import { cycleScramble, cycleWords } from './scramble';
 import { initCardGlow, initReveal } from './reveal';
 import { initCursor } from './cursor';
 import { initEggs } from './eggs';
@@ -29,6 +29,7 @@ function applyTheme(name: string, announce = false): void {
 let stopHero: (() => void) | null = null;
 let stopGame: (() => void) | null = null;
 let stopRoles: (() => void) | null = null;
+let stopWords: (() => void) | null = null;
 
 /* ---------------- preloader ---------------- */
 
@@ -96,6 +97,43 @@ function setupRoles(): void {
   });
 }
 
+/** scroll progress 0→1 across the hero runway, exposed as --t for CSS fades */
+let heroScrollBound = false;
+function bindHeroScroll(): void {
+  const hero = $('#hero');
+  if (!hero || heroScrollBound) return;
+  heroScrollBound = true;
+
+  const update = () => {
+    const t = clamp(scrollY / (hero.offsetHeight - innerHeight || 1), 0, 1);
+    document.documentElement.style.setProperty('--t', t.toFixed(4));
+    if (scrollY <= 2) document.documentElement.style.removeProperty('--t');
+    const header = $('#site-header');
+    header?.classList.toggle('scrolled', scrollY > 40);
+  };
+  addEventListener('scroll', update, { passive: true });
+  update();
+}
+
+/** trigger the typed fill-wipe on the hero name */
+function typeFillName(): void {
+  const name = $('#hero-name');
+  if (!name) return;
+  if (prefersReducedMotion()) {
+    name.classList.add('typed');
+    return;
+  }
+  // small delay so the preloader fade doesn't swallow the wipe
+  window.setTimeout(() => name.classList.add('typed'), prefersReducedMotion() ? 0 : 350);
+}
+
+function setupWordRotator(): void {
+  const rotator = $('#create-rotator');
+  if (!rotator) return;
+  stopWords?.();
+  stopWords = cycleWords(rotator);
+}
+
 async function setupProjects(): Promise<void> {
   if (!$('#repo-grid')) return;
   const { initProjectsPage } = await import('./projects-page');
@@ -122,8 +160,11 @@ function onPageLoad(): void {
 
   initReveal();
   runPreloader();
+  bindHeroScroll();
+  typeFillName();
   void setupHero();
   setupRoles();
+  setupWordRotator();
   void setupProjects();
   setupGame();
 
@@ -175,9 +216,9 @@ function globalInit(): void {
   document.addEventListener('astro:before-swap', () => {
     stopHero?.();
     stopGame?.();
-    stopHero = stopGame = null;
     stopRoles?.();
-    stopRoles = null;
+    stopWords?.();
+    stopHero = stopGame = stopRoles = stopWords = null;
   });
 
   // astro:page-load also fires on the very first load when the ClientRouter is

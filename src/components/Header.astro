@@ -7,9 +7,9 @@ const link = (href: string) => {
 };
 ---
 
-<header class="site-header">
+<header class="site-header" id="site-header">
   <div class="container header-row">
-    <a href="/" class="logo grad-text" id="logo-btn" aria-label={`${site.monogram} — home`}>{site.monogram}</a>
+    <a href="/" class="logo" id="logo-btn" aria-label={`${site.monogram} — home`}>{site.monogram}</a>
     <nav class="site-nav" aria-label="Main">
       <a href="/projects/" class={link('/projects')}>projects</a>
       <a href="/about/" class={link('/about')}>about</a>

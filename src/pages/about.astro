@@ -53,11 +53,11 @@ const timeline = [
   <section class="section container page-head">
     <SectionHeading
       kicker="03 — about"
-      title={`hi, i'm <span class="grad-text">januth</span>`}
+      title={`hi, i'm <span style="color:var(--accent)">januth</span>`}
     />
 
     <div class="about-grid">
-      <div class="portrait grad-text" data-reveal aria-hidden="true">{site.monogram}</div>
+      <div class="portrait display" data-reveal aria-hidden="true">{site.monogram}</div>
       <div class="about-bio" data-reveal style="--i:1">
         <p>
           i'm a developer who thinks <strong>software should feel alive</strong>. by day that
@@ -74,9 +74,9 @@ const timeline = [
           this site itself is the manifesto: hand-rolled animations, a working shell you can
           type real commands into, and zero UI frameworks. view source — it's all there.
         </p>
-        <div class="hero-cta" style="justify-content:flex-start; margin-top:26px;">
-          <a class="btn solid" href={`mailto:${site.email}`}>say hello</a>
-          <a class="btn ghost" href={site.socials[0].url} target="_blank" rel="noopener noreferrer">github ↗</a>
+        <div class="contact-actions" style="margin-top:26px;">
+          <a class="cybtn" href={`mailto:${site.email}`}>say hello<span class="tag">mail</span></a>
+          <a class="cybtn ghosted" href={site.socials[0].url} target="_blank" rel="noopener noreferrer">github<span class="tag">↗</span></a>
         </div>
       </div>
     </div>
@@ -92,7 +92,7 @@ const timeline = [
   </section>
 
   <section class="section container" style="padding-top:0;">
-    <SectionHeading kicker="04 — journey" title={`so far, <span class="grad-text">so shipped</span>`} />
+    <SectionHeading kicker="04 — journey" title={`so far, <span style="color:var(--accent)">so shipped</span>`} />
     <ul class="timeline">
       {timeline.map((t, i) => (
         <li data-reveal style={`--i:${i}`}>

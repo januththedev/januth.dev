@@ -3,31 +3,38 @@ import { site } from '../config/site';
 ---
 
 <section class="hero" id="hero">
-  <div id="hero-canvas-wrap" aria-hidden="true">
-    <canvas id="hero-canvas"></canvas>
-  </div>
-  <div class="hero-fallback grad-text" aria-hidden="true">{site.monogram}</div>
-
-  <div class="container hero-copy">
-    <p class="hero-kicker">~/{site.name.toLowerCase().replace(/\s+/g, '-')}</p>
-    <h1 class="hero-name">{site.name}</h1>
-    <p class="hero-roles">hello, i'm&nbsp;<span id="role-scramble">{site.roles[0]}</span></p>
-    <p class="hero-sub">
-      i make browsers do things they were never supposed to do — and occasionally,
-      exactly what they should.
-    </p>
-    <div class="hero-cta">
-      <a class="btn solid" href="/projects/">see projects</a>
-      <button class="btn ghost" data-term-open>open terminal</button>
+  <div class="hero-stage">
+    <div id="hero-canvas-wrap" aria-hidden="true">
+      <canvas id="hero-canvas"></canvas>
     </div>
-  </div>
+    <div class="hero-ghost ghost" aria-hidden="true">{site.monogram}</div>
 
-  <div class="scroll-cue mono" aria-hidden="true">scroll ↓</div>
+    <div class="hero-copy">
+      <p class="hero-kicker">~/{site.name.toLowerCase().replace(/\s+/g, '-')}</p>
+      <h1 class="hero-name type-fill" id="hero-name">{site.name.toLowerCase()}</h1>
+      <p class="hero-roles">i'm&nbsp;<span id="role-scramble">{site.roles[0]}</span></p>
+      <p class="create-line">
+        i love creating
+        <span class="create-rotator mono" id="create-rotator">
+          <span>cool things.</span>
+          <span>useful tools.</span>
+          <span>browser chaos.</span>
+          <span>this site.</span>
+        </span>
+      </p>
+      <div class="hero-cta">
+        <a class="cybtn" href="/projects/">see projects<span class="tag">01</span></a>
+        <button class="cybtn ghosted" data-term-open>open terminal<span class="tag">`</span></button>
+      </div>
+    </div>
+
+    <div class="scroll-cue mono" aria-hidden="true">scroll ↓</div>
+  </div>
 </section>
 
 <div class="preloader" id="preloader" aria-hidden="true">
-  <div class="pre-inner mono">
-    <span class="pre-logo grad-text">{site.monogram}</span>
-    <span id="pre-count">0%</span>
+  <div class="pre-inner">
+    <span class="pre-logo display">{site.monogram}</span>
+    <span class="mono" id="pre-count">0%</span>
   </div>
 </div>

@@ -12,12 +12,12 @@ import { site } from '../config/site';
   <section class="section container" id="work">
     <SectionHeading
       kicker="01 — selected work"
-      title={`things i've <span class="grad-text">made</span>`}
+      title={`things i've <span style="color:var(--accent)">made</span>`}
       sub="a taste of what keeps me up at night. the full, always-current list lives on the projects page — pulled straight from GitHub."
     />
     <div class="teaser-grid">
       {site.curated.map((c, i) => (
-        <a class="card teaser" href={c.href} style={`--i:${i + 1}`} data-reveal data-cursor>
+        <a class="teaser" href={c.href} style={`--i:${i + 1}`} data-reveal data-cursor>
           <span class="t-kicker mono">{c.kicker}</span>
           <h3>{c.title}</h3>
           <p>{c.blurb}</p>
@@ -33,11 +33,11 @@ import { site } from '../config/site';
   <section class="section container">
     <SectionHeading
       kicker="02 — the human behind the commits"
-      title={`curious? <span class="grad-text">good.</span>`}
+      title={`curious? <span style="color:var(--accent)">good.</span>`}
       sub="full-stack leanings, creative-coder heart, professional tinkerer's hands."
     />
     <div style="--i:1" data-reveal>
-      <a class="btn ghost" href="/about/">read my story</a>
+      <a class="cybtn ghosted" href="/about/">read my story<span class="tag">02</span></a>
     </div>
   </section>
 </Base>

@@ -4,23 +4,30 @@ const year = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
-  <div class="container">
-    <h2 class="foot-cta">
-      let's build something <span class="grad-text">worth staring at</span><span class="blink">_</span>
-    </h2>
-
-    <div class="foot-links">
-      <a class="plink" href="/projects/">~/projects</a>
-      <a class="plink" href="/about/">~/about</a>
-      {site.socials.map((s) => (
-        <a class="plink" href={s.url} target="_blank" rel="noopener noreferrer">~/{s.label}</a>
-      ))}
+  <div class="contact-wrap container">
+    <div class="contact">
+      <div>
+        <span class="kicker">03 — contact</span>
+        <h2>let's build something<br /><span style="color:var(--accent)">worth staring at.</span></h2>
+        <p>inbox always open — ideas, collabs, or just to argue about tabs vs spaces.</p>
+        <div class="contact-actions">
+          <a class="cybtn" href={`mailto:${site.email}`}>say hello<span class="tag">mail</span></a>
+          <a class="cybtn ghosted" href={site.socials[0].url} target="_blank" rel="noopener noreferrer">github<span class="tag">↗</span></a>
+        </div>
+        <div class="social-links">
+          <a href="/projects/">projects</a>
+          <a href="/about/">about</a>
+          {site.socials.map((s) => (
+            <a href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a>
+          ))}
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="foot-base">
-      <span>© {year} {site.name} — hand-built, no templates</span>
-      <span class="hint">psst — press <kbd>`</kbd> anywhere and type <kbd>help</kbd></span>
-      <span><span id="foot-greeting">hello</span>, visitor · your time <span id="foot-clock">--:--</span></span>
-    </div>
+  <div class="container foot-base">
+    <span>© {year} {site.name} — hand-built, no templates</span>
+    <span class="hint">psst — press <kbd>`</kbd> anywhere and type <kbd>help</kbd></span>
+    <span><span id="foot-greeting">hello</span>, visitor · your time <span id="foot-clock">--:--</span></span>
   </div>
 </footer>

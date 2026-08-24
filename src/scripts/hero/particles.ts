@@ -114,8 +114,8 @@ export async function initHeroParticles(canvas: HTMLCanvasElement): Promise<(() 
   const springs = new Float32Array(COUNT);
   const colors = new Float32Array(COUNT * 3);
 
-  const cA = new THREE.Color('#22d3ee');
-  const cB = new THREE.Color('#8b5cf6');
+  const cA = new THREE.Color('#ffffff');
+  const cB = new THREE.Color('#4a4a52');
   const tmpC = new THREE.Color();
   for (let i = 0; i < COUNT; i++) {
     // start scattered far away — springs assemble the monogram (entrance fx)
@@ -137,11 +137,11 @@ export async function initHeroParticles(canvas: HTMLCanvasElement): Promise<(() 
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const mat = new THREE.PointsMaterial({
-    size: 1.7,
+    size: 1.6,
     sizeAttenuation: true,
     vertexColors: true,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.85,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
@@ -255,7 +255,7 @@ export async function initHeroParticles(canvas: HTMLCanvasElement): Promise<(() 
       positions[iy] += Math.sin(elapsed * 2 + i) * 0.01;
     }
 
-    mat.opacity = 0.95 * (1 - scrollP);
+    mat.opacity = 0.85 * (1 - scrollP);
     scene.rotation.y = scrollP * 0.6;
     camera.position.z = 150 + scrollP * 46;
 
