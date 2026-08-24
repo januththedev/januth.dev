@@ -180,6 +180,8 @@ function onPageLoad(): void {
 function updateClock(): void {
   const clock = $('#foot-clock');
   const greet = $('#foot-greeting');
+  const yearEl = $('#foot-year');
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
   if (!clock && !greet) return;
   const tick = () => {
     const now = new Date();

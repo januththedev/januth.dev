@@ -1,6 +1,6 @@
 ---
 import { site } from '../config/site';
-const year = new Date().getFullYear();
+const year = new Date().getFullYear(); // build-time fallback; JS keeps it current
 ---
 
 <footer class="site-footer">
@@ -26,7 +26,7 @@ const year = new Date().getFullYear();
   </div>
 
   <div class="container foot-base">
-    <span>© {year} {site.name} — hand-built, no templates</span>
+    <span>© <span id="foot-year">{year}</span> {site.name} — hand-built, no templates</span>
     <span class="hint">psst — press <kbd>`</kbd> anywhere and type <kbd>help</kbd></span>
     <span><span id="foot-greeting">hello</span>, visitor · your time <span id="foot-clock">--:--</span></span>
   </div>

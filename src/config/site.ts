@@ -27,7 +27,7 @@ export const site = {
    */
   github: {
     username: 'januththedev',
-    useMock: true,
+    useMock: false,
   },
   /** hand-curated landing-page teasers (GitHub-pulled content intentionally NOT here) */
   curated: [
