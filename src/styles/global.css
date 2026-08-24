@@ -6,19 +6,20 @@
    ========================================================================== */
 
 :root {
-  --bg: #000000;
-  --bg2: #050505;
-  --surface: #111111;
-  --surface-strong: #161616;
-  --line: #232323;
-  --text: #ffffff;
-  --soft: #c7c7c7;
-  --muted: #8a8a8a;
-  --faint: #5f5f5f;
-  --accent: #20dc80; /* terminal green — the only color in the house */
+  /* rich black ramp — layered deep grays, never flat #000 */
+  --bg0: #0a0a0e;
+  --bg1: #0f0f14;
+  --bg2: #14141a;
+  --surface: #17171d;
+  --surface-strong: #1e1e25;
+  --line: #27272f;
+  --text: #f4f4f6;
+  --soft: #c9cad2;
+  --muted: #9092a0;
+  --faint: #5a5c68;
+  --accent: #21dd84; /* terminal green — the only color in the house */
   --err: #f87171;
   --warn: #fbbf24;
-  --grad: none;
   --font-display: 'Audiowide', 'Noto Sans', system-ui, sans-serif;
   --font-body: system-ui, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
@@ -28,7 +29,8 @@
 }
 
 html[data-theme='paper'] {
-  --bg: #f5f3ee;
+  --bg0: #f5f3ee;
+  --bg1: #f9f8f4;
   --bg2: #fbfaf7;
   --surface: #ffffff;
   --surface-strong: #f0eee8;
@@ -41,7 +43,8 @@ html[data-theme='paper'] {
 }
 
 html[data-theme='matrix'] {
-  --bg: #000000;
+  --bg0: #000000;
+  --bg1: #010d01;
   --bg2: #001100;
   --surface: #041a04;
   --surface-strong: #062406;
@@ -54,7 +57,8 @@ html[data-theme='matrix'] {
 }
 
 html[data-theme='vaporwave'] {
-  --bg: #16062e;
+  --bg0: #16062e;
+  --bg1: #190836;
   --bg2: #1d0b3f;
   --surface: #24104a;
   --surface-strong: #2d155c;
@@ -89,7 +93,7 @@ body {
   font-size: 16px;
   line-height: 1.65;
   color: var(--text);
-  background: linear-gradient(180deg, var(--bg), var(--bg2));
+  background: linear-gradient(180deg, var(--bg0), var(--bg2));
   overflow-x: hidden;
   /* page fades in, like the house style */
   animation: page-in 0.7s ease-out both;
@@ -109,7 +113,7 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #2c2c2c;
   border-radius: 99px;
-  border: 2px solid var(--bg);
+  border: 2px solid var(--bg0);
 }
 
 a { color: inherit; text-decoration: none; }
@@ -279,97 +283,89 @@ h1, h2, h3 {
   font-size: 0.72rem;
 }
 
-/* ---------- hero ---------- */
+/* ---------- scroll journey (the elvis-mao-style sticky experience) ----------
+   One 420vh runway; a sticky stage holds every beat. A single --t progress
+   variable (0→1 over the runway, set by scripts) drives all fades:
+   panels fade in/out across t windows exactly like the house style. */
 
-.hero {
+#space {
   position: relative;
-  height: 260vh; /* sticky scroll runway */
+  height: 420vh;
 }
-.hero-stage {
+.stage {
   position: sticky;
   top: 0;
   height: 100vh;
   overflow: clip;
-  display: grid;
-  align-items: center;
 }
 
 #hero-canvas-wrap {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  opacity: calc(1 - var(--t, 0) * 1.15);
+  z-index: 1;
+  opacity: calc((1 - var(--t, 0)) * 0.85);
 }
 #hero-canvas-wrap canvas { width: 100%; height: 100%; display: block; }
 
-.hero-ghost {
+.big-title {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 2;
   display: grid;
   place-items: center;
-  font-size: clamp(160px, 40vw, 560px);
+  font-family: var(--font-display);
+  font-size: clamp(180px, 42vw, 620px);
   line-height: 1;
+  color: var(--soft);
   pointer-events: none;
   user-select: none;
-  opacity: 0;
+  opacity: calc(1 - var(--t, 0) * 1.7);
 }
 
-/* static fallback when WebGL is off or reduced motion is requested */
-.hero-fallback { display: none; }
-.hero.no-webgl #hero-canvas-wrap,
-.reduced-motion-hero #hero-canvas-wrap { display: none; }
-.hero.no-webgl .hero-ghost,
-.reduced-motion-hero .hero-ghost { display: grid; opacity: 0.7; }
-
-.hero-copy {
-  position: relative;
-  z-index: 2;
-  width: min(560px, 90%);
-  margin-left: max(calc((100vw - var(--container)) / 2), 24px);
-  transform: translateY(calc(var(--t, 0) * -60px));
+.panel {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  padding: clamp(24px, 5vw, 64px);
+  pointer-events: none;
 }
+.panel a, .panel button { pointer-events: auto; }
 
-.hero-kicker {
-  font-family: var(--font-mono);
-  color: var(--muted);
-  font-size: 0.85rem;
-  margin: 0 0 20px;
-  letter-spacing: 0.08em;
+/* beat 1 — intro fragments, right-aligned */
+#intro {
+  justify-content: flex-end;
+  align-items: center;
+  opacity: clamp(0, calc(5 * min(var(--t, 0) - 0.08, 0.52 - var(--t, 0))), 1);
 }
-
-.hero-name {
-  font-size: clamp(2rem, 4.6vw, 3.6rem);
-  margin-bottom: 18px;
-  white-space: nowrap;
+.intro-box { width: min(42%, 34rem); min-width: min(100%, 21rem); }
+.frag {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  line-height: 1.35;
 }
 
 /* typed fill-wipe reveal, house specialty */
-.type-fill {
+.type {
   background: linear-gradient(currentColor, currentColor) no-repeat 0 0 / 0% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  transition: background-size 1.4s ease-in;
+  transition: background-size 1.6s ease-in;
 }
-.type-fill.typed { background-size: 100% 100%; }
-
-.hero-roles {
-  font-family: var(--font-mono);
-  font-size: clamp(0.95rem, 2vw, 1.1rem);
-  color: var(--muted);
-  margin: 0 0 6px;
-  min-height: 1.8em;
-}
-.hero-roles .scr { color: var(--accent); }
+.type.typed { background-size: 100% 100%; }
+.intro-box .type:nth-child(2) { transition-delay: 0.45s; }
+.intro-box .type:nth-child(3) { transition-delay: 0.9s; }
 
 .create-line {
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 2.4vw, 1.6rem);
-  margin: 0 0 36px;
+  font-size: clamp(1.05rem, 2.2vw, 1.5rem);
+  margin: 1.4em 0 0;
   display: flex;
   gap: 0.5em;
   align-items: baseline;
+  color: var(--soft);
 }
 .create-rotator {
   position: relative;
@@ -377,7 +373,7 @@ h1, h2, h3 {
   height: 1.5em;
   overflow: hidden;
   vertical-align: bottom;
-  min-width: 7ch;
+  min-width: 8ch;
 }
 .create-rotator span {
   position: absolute;
@@ -388,17 +384,70 @@ h1, h2, h3 {
   transition: top 0.35s ease, opacity 0.35s ease;
 }
 
-.hero-cta { display: flex; gap: 16px; flex-wrap: wrap; }
+/* beat 2 — the data counters */
+#data {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: clamp(20px, 4vw, 56px);
+  opacity: clamp(0, calc(6 * min(var(--t, 0) - 0.46, 0.74 - var(--t, 0))), 1);
+}
+.data-container { width: min(11em, 30vw); }
+.data-number {
+  font-family: var(--font-display);
+  font-size: min(3.4em, 9vw);
+  font-variant-numeric: tabular-nums;
+}
+.data-title { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+
+/* beat 3 — the growing punchline */
+#alot {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  white-space: nowrap;
+  color: var(--text);
+  font-size: clamp(0rem, calc((var(--t, 0) - 0.76) * 160vw), 17vw);
+  opacity: clamp(0, calc((var(--t, 0) - 0.75) * 10), 1);
+  pointer-events: none;
+}
+
+/* beat 4 — ascii avatar globe */
+#avatar {
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 22px;
+  opacity: clamp(0, calc(6 * min(var(--t, 0) - 0.86, 1.25 - var(--t, 0))), 1);
+}
+.ascii-globe {
+  margin: 0;
+  padding: clamp(18px, 3vw, 40px) clamp(14px, 2.4vw, 34px);
+  border-radius: 50%;
+  font-family: Consolas, 'JetBrains Mono', monospace;
+  font-size: clamp(9px, 1.35vmin, 15px);
+  line-height: 0.62em;
+  text-rendering: optimizeSpeed;
+  white-space: pre;
+  color: var(--accent);
+  background-image: radial-gradient(circle farthest-corner at 72% 72%, #07141c, #0a1a26 55%, #10312a);
+  box-shadow: 0 0 90px rgba(33, 221, 132, 0.12);
+}
+.ascii-caption { font-family: var(--font-mono); font-size: 0.78rem; color: var(--faint); }
 
 .scroll-cue {
   position: absolute;
   bottom: 26px;
   left: 50%;
   translate: -50% 0;
-  z-index: 2;
+  z-index: 5;
   font-family: var(--font-mono);
   color: var(--faint);
   animation: cue-bob 2.2s ease-in-out infinite;
+  opacity: calc(1 - var(--t, 0) * 4);
 }
 @keyframes cue-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
 
@@ -409,7 +458,7 @@ h1, h2, h3 {
   z-index: 3000;
   display: grid;
   place-items: center;
-  background: #000;
+  background: var(--bg0);
   transition: opacity 0.6s ease, visibility 0.6s ease;
 }
 .preloader.done { opacity: 0; visibility: hidden; }

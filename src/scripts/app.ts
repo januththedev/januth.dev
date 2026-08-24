@@ -1,5 +1,5 @@
-import { $, prefersReducedMotion, showToast, clamp } from './lib/dom';
-import { cycleScramble, cycleWords } from './scramble';
+import { $, $$, prefersReducedMotion, showToast, clamp } from './lib/dom';
+import { cycleWords } from './scramble';
 import { initCardGlow, initReveal } from './reveal';
 import { initCursor } from './cursor';
 import { initEggs } from './eggs';
@@ -28,7 +28,6 @@ function applyTheme(name: string, announce = false): void {
 
 let stopHero: (() => void) | null = null;
 let stopGame: (() => void) | null = null;
-let stopRoles: (() => void) | null = null;
 let stopWords: (() => void) | null = null;
 
 /* ---------------- preloader ---------------- */
@@ -88,43 +87,43 @@ async function setupHero(): Promise<void> {
   }
 }
 
-function setupRoles(): void {
-  const el = $('#role-scramble');
-  if (!el) return;
-  import('../config/site').then(({ site }) => {
-    stopRoles?.();
-    stopRoles = cycleScramble(el, site.roles);
-  });
-}
+/**
+ * The elvis-mao-style scroll journey: one --t progress variable (0→1 over
+ * the #space runway) drives every panel fade from CSS; past a threshold it
+ * also fires the typed fill-wipe on the intro fragments.
+ */
+let journeyBound = false;
+function bindJourney(): void {
+  if (journeyBound) return;
+  const space = document.getElementById('space');
+  if (!space) return;
+  journeyBound = true;
 
-/** scroll progress 0→1 across the hero runway, exposed as --t for CSS fades */
-let heroScrollBound = false;
-function bindHeroScroll(): void {
-  const hero = $('#hero');
-  if (!hero || heroScrollBound) return;
-  heroScrollBound = true;
-
+  let ticking = false;
   const update = () => {
-    const t = clamp(scrollY / (hero.offsetHeight - innerHeight || 1), 0, 1);
-    document.documentElement.style.setProperty('--t', t.toFixed(4));
-    if (scrollY <= 2) document.documentElement.style.removeProperty('--t');
+    ticking = false;
     const header = $('#site-header');
     header?.classList.toggle('scrolled', scrollY > 40);
-  };
-  addEventListener('scroll', update, { passive: true });
-  update();
-}
 
-/** trigger the typed fill-wipe on the hero name */
-function typeFillName(): void {
-  const name = $('#hero-name');
-  if (!name) return;
-  if (prefersReducedMotion()) {
-    name.classList.add('typed');
-    return;
-  }
-  // small delay so the preloader fade doesn't swallow the wipe
-  window.setTimeout(() => name.classList.add('typed'), prefersReducedMotion() ? 0 : 350);
+    const runway = space.offsetHeight - innerHeight;
+    if (runway <= 0) return;
+    const t = clamp(scrollY / runway, 0, 1);
+    document.documentElement.style.setProperty('--t', t.toFixed(4));
+    if (t > 0.08) {
+      for (const el of $$('#intro .type')) el.classList.add('typed');
+    }
+  };
+  addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    },
+    { passive: true }
+  );
+  update();
 }
 
 function setupWordRotator(): void {
@@ -132,6 +131,18 @@ function setupWordRotator(): void {
   if (!rotator) return;
   stopWords?.();
   stopWords = cycleWords(rotator);
+}
+
+let stopAscii: (() => void) | null = null;
+
+/** beat 4 — live ASCII portrait */
+function setupAscii(): void {
+  const pre = $<HTMLPreElement>('#ascii-jn');
+  if (!pre) return;
+  import('./ascii-avatar').then(({ initAsciiAvatar }) => {
+    stopAscii?.();
+    stopAscii = initAsciiAvatar(pre);
+  });
 }
 
 async function setupProjects(): Promise<void> {
@@ -160,11 +171,10 @@ function onPageLoad(): void {
 
   initReveal();
   runPreloader();
-  bindHeroScroll();
-  typeFillName();
+  bindJourney();
   void setupHero();
-  setupRoles();
   setupWordRotator();
+  setupAscii();
   void setupProjects();
   setupGame();
 
@@ -216,9 +226,9 @@ function globalInit(): void {
   document.addEventListener('astro:before-swap', () => {
     stopHero?.();
     stopGame?.();
-    stopRoles?.();
+    stopAscii?.();
     stopWords?.();
-    stopHero = stopGame = stopRoles = stopWords = null;
+    stopHero = stopGame = stopAscii = stopWords = null;
   });
 
   // astro:page-load also fires on the very first load when the ClientRouter is

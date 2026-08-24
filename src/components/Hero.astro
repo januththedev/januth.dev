@@ -1,36 +1,68 @@
 ---
 import { site } from '../config/site';
+
+/** lowercase fragments revealed with the typed fill-wipe, house-style */
+const frags = ['a builder.', 'a creative coder.', 'a professional tinkerer.'];
+
+const stats = [
+  { num: '100%', label: 'hand-built, zero templates', countFrom: 0 },
+  { num: '0', label: 'boring sites made', countFrom: 47 },
+  { num: '24/7', label: 'build mode', countFrom: null },
+  { num: '∞', label: 'curiosity (unbounded)', countFrom: null },
+];
 ---
 
-<section class="hero" id="hero">
-  <div class="hero-stage">
+<div id="space">
+  <div class="stage" id="stage">
     <div id="hero-canvas-wrap" aria-hidden="true">
       <canvas id="hero-canvas"></canvas>
     </div>
-    <div class="hero-ghost ghost" aria-hidden="true">{site.monogram}</div>
 
-    <div class="hero-copy">
-      <p class="hero-kicker">~/{site.name.toLowerCase().replace(/\s+/g, '-')}</p>
-      <h1 class="hero-name type-fill" id="hero-name">{site.name.toLowerCase()}</h1>
-      <p class="hero-roles">i'm&nbsp;<span id="role-scramble">{site.roles[0]}</span></p>
-      <p class="create-line">
-        i love creating
-        <span class="create-rotator mono" id="create-rotator">
-          <span>cool things.</span>
-          <span>useful tools.</span>
-          <span>browser chaos.</span>
-          <span>this site.</span>
-        </span>
-      </p>
-      <div class="hero-cta">
-        <a class="cybtn" href="/projects/">see projects<span class="tag">01</span></a>
-        <button class="cybtn ghosted" data-term-open>open terminal<span class="tag">`</span></button>
+    <div class="big-title" aria-hidden="true">{site.monogram}</div>
+
+    <section class="panel" id="intro">
+      <div class="intro-box">
+        <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">
+          {site.name} — portfolio
+        </h1>
+        {frags.map((f) => <span class="frag type">{f}</span>)}
+        <p class="create-line">
+          i love creating
+          <span class="create-rotator" id="create-rotator">
+            <span>cool things.</span>
+            <span>useful tools.</span>
+            <span>browser chaos.</span>
+            <span>this site.</span>
+          </span>
+        </p>
       </div>
-    </div>
+    </section>
+
+    <section class="panel" id="data">
+      {stats.map((s) => (
+        <div class="data-container">
+          <div
+            class="data-number"
+            data-count-to={s.num}
+            data-count-from={s.countFrom ?? ''}
+          >
+            {s.num}
+          </div>
+          <div class="data-title">{s.label}</div>
+        </div>
+      ))}
+    </section>
+
+    <div id="alot" aria-hidden="true">that's a lot.</div>
+
+    <section class="panel" id="avatar">
+      <pre class="ascii-globe" id="ascii-jn" aria-label="ASCII portrait of the JN monogram, rendered live"></pre>
+      <span class="ascii-caption">rendered live in your browser · no images were harmed</span>
+    </section>
 
     <div class="scroll-cue mono" aria-hidden="true">scroll ↓</div>
   </div>
-</section>
+</div>
 
 <div class="preloader" id="preloader" aria-hidden="true">
   <div class="pre-inner">
@@ -38,3 +70,50 @@ import { site } from '../config/site';
     <span class="mono" id="pre-count">0%</span>
   </div>
 </div>
+
+<script>
+  // count-up when the data beat scrolls into view; counts DOWN on purpose for the joke stat
+  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  function animate(el: HTMLElement) {
+    const to = el.dataset.countTo ?? '';
+    const fromRaw = el.dataset.countFrom ?? '';
+    if (!fromRaw || !/\d/.test(to)) return;
+    const toNum = parseInt(to.replace(/\D/g, ''), 10);
+    const fromNum = parseInt(fromRaw, 10);
+    const prefix = /^\D+/.exec(to)?.[0] ?? '';
+    const suffix = /\D+$/.exec(to)?.[0] ?? '';
+    const dur = 1400;
+    const start = performance.now();
+    const tick = (now: number) => {
+      if (!document.body.contains(el)) return;
+      const p = Math.min(1, (now - start) / dur);
+      el.textContent = `${prefix}${Math.round(fromNum + (toNum - fromNum) * ease(p))}${suffix}`;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    const data = document.getElementById('data');
+    if (!data) return;
+    const nums = [...data.querySelectorAll<HTMLElement>('.data-number[data-count-from]:not([data-count-from=""])')];
+    if (!nums.length) return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      nums.forEach((n) => (n.textContent = n.dataset.countTo ?? n.textContent));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          nums.forEach(animate);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    io.observe(data);
+  });
+</script>

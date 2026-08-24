@@ -2,7 +2,6 @@
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import SectionHeading from '../components/SectionHeading.astro';
-import StatsStrip from '../components/StatsStrip.astro';
 import { site } from '../config/site';
 ---
 
@@ -26,18 +25,5 @@ import { site } from '../config/site';
       ))}
     </div>
     <a class="more-link mono" href="/projects/">every repo i've pushed → live from github</a>
-  </section>
-
-  <StatsStrip />
-
-  <section class="section container">
-    <SectionHeading
-      kicker="02 — the human behind the commits"
-      title={`curious? <span style="color:var(--accent)">good.</span>`}
-      sub="full-stack leanings, creative-coder heart, professional tinkerer's hands."
-    />
-    <div style="--i:1" data-reveal>
-      <a class="cybtn ghosted" href="/about/">read my story<span class="tag">02</span></a>
-    </div>
   </section>
 </Base>
