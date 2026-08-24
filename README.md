@@ -62,7 +62,13 @@ src/
   to a CSS fallback when WebGL is unavailable.
 - themes are CSS custom-property swaps on `<html data-theme>`; add one in
   `src/styles/global.css` + register it in `scripts/app.ts`.
-- deploys as plain static files — Cloudflare Pages, Vercel, Netlify or GitHub Pages.
+- **deploys to Vercel** (zero-config Astro):
+  ```bash
+  npx vercel login     # once
+  npx vercel --prod    # every deploy after that
+  ```
+  flip `useMock: false` in `src/config/site.ts` before going public so the
+  projects page shows your real repos.
 - og:image not shipped yet; drop a 1200×630 PNG into `public/` and reference it in
   `Base.astro` when ready.
 
