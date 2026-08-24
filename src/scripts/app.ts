@@ -26,7 +26,6 @@ function applyTheme(name: string, announce = false): void {
   if (announce) showToast(`theme → ${theme}`);
 }
 
-let stopHero: (() => void) | null = null;
 let stopGame: (() => void) | null = null;
 let stopWords: (() => void) | null = null;
 
@@ -67,30 +66,10 @@ function runPreloader(): void {
 
 /* ---------------- per-page wiring ---------------- */
 
-async function setupHero(): Promise<void> {
-  const canvas = $<HTMLCanvasElement>('#hero-canvas');
-  if (!canvas) return;
-
-  if (prefersReducedMotion()) {
-    canvas.closest('.hero')?.classList.add('reduced-motion-hero');
-    return;
-  }
-
-  const { initHeroParticles } = await import('./hero/particles');
-  stopHero?.();
-  const dispose = await initHeroParticles(canvas);
-  if (dispose) {
-    stopHero = dispose;
-  } else {
-    // WebGL unavailable → graceful CSS fallback
-    canvas.closest('.hero')?.classList.add('no-webgl');
-  }
-}
-
 /**
  * The elvis-mao-style scroll journey: one --t progress variable (0→1 over
- * the #space runway) drives every panel fade from CSS; past a threshold it
- * also fires the typed fill-wipe on the intro fragments.
+ * the #space runway) drives every panel fade from CSS, feeds the ASCII head's
+ * camera keyframes, and fires the typed fill-wipe past a threshold.
  */
 let journeyBound = false;
 function bindJourney(): void {
@@ -108,7 +87,9 @@ function bindJourney(): void {
     const runway = space.offsetHeight - innerHeight;
     if (runway <= 0) return;
     const t = clamp(scrollY / runway, 0, 1);
+    latestT = t;
     document.documentElement.style.setProperty('--t', t.toFixed(4));
+    journeyHead?.setProgress(t);
     if (t > 0.08) {
       for (const el of $$('#intro .type')) el.classList.add('typed');
     }
@@ -126,23 +107,38 @@ function bindJourney(): void {
   update();
 }
 
+interface JourneyHeadHandle {
+  setProgress(t: number): void;
+  dispose(): void;
+}
+
+let stopHead: (() => void) | null = null;
+let journeyHead: JourneyHeadHandle | null = null;
+let latestT = 0;
+
+/** the spinning ASCII head (three.js → AsciiEffect), lazily built on the landing */
+function setupHead(): void {
+  const container = $('#jn-ascii');
+  if (!container) return;
+  import('./journey/head').then(async ({ initJourneyHead }) => {
+    stopHead?.();
+    stopHead = null;
+    const head = await initJourneyHead(container);
+    if (!head) return;
+    journeyHead = head;
+    head.setProgress(latestT);
+    stopHead = () => {
+      head.dispose();
+      journeyHead = null;
+    };
+  });
+}
+
 function setupWordRotator(): void {
   const rotator = $('#create-rotator');
   if (!rotator) return;
   stopWords?.();
   stopWords = cycleWords(rotator);
-}
-
-let stopAscii: (() => void) | null = null;
-
-/** beat 4 — live ASCII portrait */
-function setupAscii(): void {
-  const pre = $<HTMLPreElement>('#ascii-jn');
-  if (!pre) return;
-  import('./ascii-avatar').then(({ initAsciiAvatar }) => {
-    stopAscii?.();
-    stopAscii = initAsciiAvatar(pre);
-  });
 }
 
 async function setupProjects(): Promise<void> {
@@ -172,9 +168,8 @@ function onPageLoad(): void {
   initReveal();
   runPreloader();
   bindJourney();
-  void setupHero();
+  setupHead();
   setupWordRotator();
-  setupAscii();
   void setupProjects();
   setupGame();
 
@@ -224,11 +219,10 @@ function globalInit(): void {
   initTerminalKeybinds();
 
   document.addEventListener('astro:before-swap', () => {
-    stopHero?.();
+    stopHead?.();
     stopGame?.();
-    stopAscii?.();
     stopWords?.();
-    stopHero = stopGame = stopAscii = stopWords = null;
+    stopHead = stopGame = stopWords = null;
   });
 
   // astro:page-load also fires on the very first load when the ClientRouter is
