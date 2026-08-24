@@ -38,30 +38,36 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
  * Demo dataset used while `site.github.useMock` is true (or when the network
  * and cache both fail). Shaped exactly like the real API response so the flip
  * to live data changes nothing downstream.
+ *
+ * Modeled on the repo mix of a working dev portfolio (flagship OSS tool,
+ * blog, graders/bots, hardware toy, utilities) — swap these entries for your
+ * own real repos by flipping useMock, or edit them here until then.
  */
 const MOCK_REPOS: Repo[] = [
   {
-    name: 'jn-portfolio',
+    name: 'jnfont',
     description:
-      'This very site. WebGL particle monogram, a real in-browser shell, zero UI frameworks.',
-    html_url: 'https://github.com/januththedev/jn-portfolio',
-    language: 'TypeScript',
-    stargazers_count: 42,
-    forks_count: 3,
-    topics: ['astro', 'threejs', 'creative-coding'],
+      'Free web-font subsetting service — ship beautiful custom type without shipping megabytes.',
+    html_url: 'https://github.com/januththedev/jnfont',
+    language: 'JavaScript',
+    stargazers_count: 187,
+    forks_count: 21,
+    topics: ['fonts', 'performance', 'web'],
   },
   {
-    name: 'shellcraft',
-    description: 'A tiny POSIX-ish shell written from scratch in TypeScript. Parsers are fun, actually.',
-    html_url: 'https://github.com/januththedev/shellcraft',
+    name: 'autograde',
+    description:
+      'Coding-assignment submission + automated grading pipeline for classrooms. Teachers sleep, robots grade.',
+    html_url: 'https://github.com/januththedev/autograde',
     language: 'TypeScript',
-    stargazers_count: 87,
-    forks_count: 9,
-    topics: ['shell', 'parser', 'cli'],
+    stargazers_count: 34,
+    forks_count: 6,
+    topics: ['education', 'ci', 'developer-tools'],
   },
   {
     name: 'particle-lab',
-    description: 'Playground of GPU particle systems — attractors, springs and things that explode politely.',
+    description:
+      'Playground of GPU particle systems — attractors, springs and things that explode politely.',
     html_url: 'https://github.com/januththedev/particle-lab',
     language: 'JavaScript',
     stargazers_count: 64,
@@ -69,31 +75,64 @@ const MOCK_REPOS: Repo[] = [
     topics: ['webgl', 'threejs', 'particles'],
   },
   {
-    name: 'commit-gremlin',
-    description: 'CLI gremlin that roasts your git history before your teammates do.',
-    html_url: 'https://github.com/januththedev/commit-gremlin',
-    language: 'Python',
-    stargazers_count: 128,
-    forks_count: 14,
-    topics: ['git', 'cli', 'fun'],
+    name: 'grammar-gremlin',
+    description:
+      'Group-chat bot that enforces typos, proper nouns and capitalization before your teammates notice.',
+    html_url: 'https://github.com/januththedev/grammar-gremlin',
+    language: 'TypeScript',
+    stargazers_count: 28,
+    forks_count: 3,
+    topics: ['telegram-bot', 'nlp', 'fun'],
   },
   {
-    name: 'dotfiles-of-doom',
-    description: 'My machine setup. Steal shamelessly — I did.',
-    html_url: 'https://github.com/januththedev/dotfiles-of-doom',
-    language: 'Shell',
-    stargazers_count: 23,
+    name: 'jn-blog',
+    description:
+      'My corner of the internet for tech write-ups, design breakdowns and postmortems of my own mistakes.',
+    html_url: 'https://github.com/januththedev/jn-blog',
+    language: 'Astro',
+    stargazers_count: 19,
     forks_count: 2,
-    topics: ['dotfiles', 'linux', 'setup'],
+    topics: ['blog', 'astro', 'website'],
   },
   {
     name: 'midnight-renderer',
-    description: 'Software rasterizer built to finally understand what GPUs do for a living.',
+    description:
+      'Software rasterizer built to finally understand what GPUs do for a living.',
     html_url: 'https://github.com/januththedev/midnight-renderer',
     language: 'Rust',
-    stargazers_count: 156,
-    forks_count: 21,
+    stargazers_count: 52,
+    forks_count: 8,
     topics: ['rust', 'graphics', 'rendering'],
+  },
+  {
+    name: 'esp32-synth',
+    description:
+      'Course final project turned obsession — a playable digital instrument on an ESP32 and spare parts.',
+    html_url: 'https://github.com/januththedev/esp32-synth',
+    language: 'C++',
+    stargazers_count: 11,
+    forks_count: 1,
+    topics: ['esp32', 'audio', 'hardware'],
+  },
+  {
+    name: 'win-taming-guide',
+    description:
+      'Fresh-Windows-to-power-setup in one sitting: scripts, tweaks and the registry keys worth touching.',
+    html_url: 'https://github.com/januththedev/win-taming-guide',
+    language: 'PowerShell',
+    stargazers_count: 15,
+    forks_count: 4,
+    topics: ['dotfiles', 'windows', 'setup'],
+  },
+  {
+    name: 'where-is-my-bus',
+    description:
+      'Live transit availability analyzer for my city’s buses, because timetables are fiction.',
+    html_url: 'https://github.com/januththedev/where-is-my-bus',
+    language: 'TypeScript',
+    stargazers_count: 9,
+    forks_count: 1,
+    topics: ['scraping', 'maps', 'civic-tech'],
   },
 ];
 
