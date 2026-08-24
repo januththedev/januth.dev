@@ -1,0 +1,178 @@
+import { site } from '../config/site';
+
+export interface Repo {
+  name: string;
+  description: string;
+  html_url: string;
+  language: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  topics: string[];
+}
+
+export type DataSource = 'live' | 'cache' | 'mock';
+
+/** GitHub language colors (subset — anything unknown falls back to the accent) */
+export const LANG_COLORS: Record<string, string> = {
+  TypeScript: '#3178c6',
+  JavaScript: '#f1e05a',
+  Python: '#3572A5',
+  HTML: '#e34c26',
+  CSS: '#563d7c',
+  Rust: '#dea584',
+  Go: '#00ADD8',
+  Java: '#b07219',
+  C: '#555555',
+  'C++': '#f34b7d',
+  'C#': '#178600',
+  Shell: '#89e051',
+  Lua: '#000080',
+  Vue: '#41b883',
+  Astro: '#ff5a03',
+};
+
+const CACHE_KEY = `jn:repos:v1:${site.github.username}`;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * Demo dataset used while `site.github.useMock` is true (or when the network
+ * and cache both fail). Shaped exactly like the real API response so the flip
+ * to live data changes nothing downstream.
+ */
+const MOCK_REPOS: Repo[] = [
+  {
+    name: 'jn-portfolio',
+    description:
+      'This very site. WebGL particle monogram, a real in-browser shell, zero UI frameworks.',
+    html_url: 'https://github.com/januththedev/jn-portfolio',
+    language: 'TypeScript',
+    stargazers_count: 42,
+    forks_count: 3,
+    topics: ['astro', 'threejs', 'creative-coding'],
+  },
+  {
+    name: 'shellcraft',
+    description: 'A tiny POSIX-ish shell written from scratch in TypeScript. Parsers are fun, actually.',
+    html_url: 'https://github.com/januththedev/shellcraft',
+    language: 'TypeScript',
+    stargazers_count: 87,
+    forks_count: 9,
+    topics: ['shell', 'parser', 'cli'],
+  },
+  {
+    name: 'particle-lab',
+    description: 'Playground of GPU particle systems — attractors, springs and things that explode politely.',
+    html_url: 'https://github.com/januththedev/particle-lab',
+    language: 'JavaScript',
+    stargazers_count: 64,
+    forks_count: 5,
+    topics: ['webgl', 'threejs', 'particles'],
+  },
+  {
+    name: 'commit-gremlin',
+    description: 'CLI gremlin that roasts your git history before your teammates do.',
+    html_url: 'https://github.com/januththedev/commit-gremlin',
+    language: 'Python',
+    stargazers_count: 128,
+    forks_count: 14,
+    topics: ['git', 'cli', 'fun'],
+  },
+  {
+    name: 'dotfiles-of-doom',
+    description: 'My machine setup. Steal shamelessly — I did.',
+    html_url: 'https://github.com/januththedev/dotfiles-of-doom',
+    language: 'Shell',
+    stargazers_count: 23,
+    forks_count: 2,
+    topics: ['dotfiles', 'linux', 'setup'],
+  },
+  {
+    name: 'midnight-renderer',
+    description: 'Software rasterizer built to finally understand what GPUs do for a living.',
+    html_url: 'https://github.com/januththedev/midnight-renderer',
+    language: 'Rust',
+    stargazers_count: 156,
+    forks_count: 21,
+    topics: ['rust', 'graphics', 'rendering'],
+  },
+];
+
+interface CacheShape {
+  ts: number;
+  repos: Repo[];
+}
+
+function readCache(): CacheShape | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CacheShape;
+    return Array.isArray(parsed?.repos) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(repos: Repo[]): void {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), repos } satisfies CacheShape));
+  } catch {
+    /* storage full/blocked — non-fatal */
+  }
+}
+
+interface GhRepo {
+  name: string;
+  description: string | null;
+  html_url: string;
+  language: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  fork: boolean;
+  topics?: string[];
+  pushed_at: string;
+}
+
+function mapRepo(r: GhRepo): Repo {
+  return {
+    name: r.name,
+    description: r.description ?? '',
+    html_url: r.html_url,
+    language: r.language,
+    stargazers_count: r.stargazers_count,
+    forks_count: r.forks_count,
+    topics: (r.topics ?? []).slice(0, 4),
+  };
+}
+
+export async function getRepos(): Promise<{ repos: Repo[]; source: DataSource }> {
+  const { username, useMock } = site.github;
+
+  if (useMock) return { repos: MOCK_REPOS, source: 'mock' };
+
+  const cached = readCache();
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return { repos: cached.repos, source: 'cache' };
+  }
+
+  try {
+    const res = await fetch(
+      `https://api.github.com/users/${username}/repos?sort=pushed&per_page=100`,
+      { headers: { Accept: 'application/vnd.github+json' } }
+    );
+    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+    const json = (await res.json()) as GhRepo[];
+    const repos = json
+      .filter((r) => !r.fork)
+      .sort((a, b) => b.stargazers_count - a.stargazers_count || +new Date(b.pushed_at) - +new Date(a.pushed_at))
+      .slice(0, 9)
+      .map(mapRepo);
+    if (!repos.length) throw new Error('no public repos');
+    writeCache(repos);
+    return { repos, source: 'live' };
+  } catch {
+    // network failed — serve stale cache if we have any, else demo data
+    if (cached) return { repos: cached.repos, source: 'cache' };
+    return { repos: MOCK_REPOS, source: 'mock' };
+  }
+}
