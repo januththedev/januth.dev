@@ -1,0 +1,86 @@
+---
+interface Stat {
+  num: string;
+  label: string;
+  /** animate from this number to `num` when scrolled into view (numeric only) */
+  countFrom?: number;
+}
+interface Props {
+  stats?: Stat[];
+}
+
+const defaultStats: Stat[] = [
+  { num: '100%', label: 'hand-built, zero templates', countFrom: 0 },
+  { num: '0', label: 'boring sites made', countFrom: 47 },
+  { num: '24/7', label: 'build mode' },
+  { num: '∞', label: 'curiosity (unbounded)' },
+];
+const { stats = defaultStats } = Astro.props;
+---
+
+<section class="stats-strip">
+  <div class="container">
+    <div class="stats-grid">
+      {stats.map((s) => (
+        <div class="stat" data-reveal>
+          <div
+            class="stat-num grad-text"
+            data-count-to={s.num}
+            data-count-from={s.countFrom}
+          >
+            {s.num}
+          </div>
+          <div class="stat-label">{s.label}</div>
+        </div>
+      ))}
+    </div>
+    <p class="stats-punch">— that's the whole pitch.</p>
+  </div>
+</section>
+
+<script>
+  // count-up when the strip scrolls into view; counts DOWN when countFrom > target (yes, on purpose)
+  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  function animate(el: HTMLElement) {
+    const to = el.dataset.countTo ?? '';
+    const fromRaw = el.dataset.countFrom;
+    if (fromRaw == null || !/\d/.test(to)) return;
+    const toNum = parseInt(to.replace(/\D/g, ''), 10);
+    const fromNum = parseInt(fromRaw, 10);
+    const prefix = /^\D+/.exec(to)?.[0] ?? '';
+    const suffix = /\D+$/.exec(to)?.[0] ?? '';
+    const dur = 1400;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / dur);
+      const val = Math.round(fromNum + (toNum - fromNum) * ease(p));
+      el.textContent = `${prefix}${val}${suffix}`;
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    const strip = document.querySelector('.stats-strip');
+    if (!strip) return;
+    const nums = [...strip.querySelectorAll<HTMLElement>('.stat-num[data-count-from]')];
+    if (!nums.length) return;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      nums.forEach((n) => (n.textContent = n.dataset.countTo ?? n.textContent));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          nums.forEach(animate);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    io.observe(strip);
+  });
+</script>

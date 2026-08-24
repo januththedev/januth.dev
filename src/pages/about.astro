@@ -1,0 +1,106 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { site } from '../config/site';
+
+const skills = [
+  {
+    group: 'languages',
+    items: ['TypeScript', 'JavaScript', 'Python', 'HTML/CSS', 'SQL', 'learning Rust'],
+  },
+  {
+    group: 'frontend',
+    items: ['Astro', 'React', 'Three.js / WebGL', 'CSS wizardry', 'canvas APIs'],
+  },
+  {
+    group: 'backend & tools',
+    items: ['Node.js', 'REST APIs', 'Git (fluently)', 'Linux', 'Docker basics'],
+  },
+  {
+    group: 'currently exploring',
+    items: ['shaders', 'game dev', 'systems design', 'whatever looks fun'],
+  },
+];
+
+const timeline = [
+  {
+    year: 'the origin',
+    title: 'first line of code',
+    text: "opened an editor out of curiosity. never really closed it again.",
+  },
+  {
+    year: 'level up',
+    title: 'full-stack arc',
+    text: 'APIs, databases, deployment pipelines — learned to ship whole things, not just pixels.',
+  },
+  {
+    year: 'the twist',
+    title: 'creative coding rabbit hole',
+    text: 'discovered WebGL and interactive fiction-in-the-browser. this portfolio is the receipt.',
+  },
+  {
+    year: 'now',
+    title: 'building in public',
+    text: 'shipping tools, experiments and open source as januththedev. the graph below never lies.',
+  },
+];
+---
+
+<Base
+  title="about"
+  description="Who is Januth Nimnal? Full-stack developer, creative coder, tinkerer. Skills, story and ways to say hi."
+>
+  <section class="section container page-head">
+    <SectionHeading
+      kicker="03 — about"
+      title={`hi, i'm <span class="grad-text">januth</span>`}
+    />
+
+    <div class="about-grid">
+      <div class="portrait grad-text" data-reveal aria-hidden="true">{site.monogram}</div>
+      <div class="about-bio" data-reveal style="--i:1">
+        <p>
+          i'm a developer who thinks <strong>software should feel alive</strong>. by day that
+          means full-stack work — clean APIs, sane data models, interfaces that don't fight
+          back. by night it means teaching browsers tricks: particle systems, terminals inside
+          web pages, games hidden behind 404s.
+        </p>
+        <p>
+          i tinker across the stack because <strong>boring boundaries make boring
+          software</strong>. if it involves code, motion, or a suspicious amount of console.log,
+          i'm interested.
+        </p>
+        <p>
+          this site itself is the manifesto: hand-rolled animations, a working shell you can
+          type real commands into, and zero UI frameworks. view source — it's all there.
+        </p>
+        <div class="hero-cta" style="justify-content:flex-start; margin-top:26px;">
+          <a class="btn solid" href={`mailto:${site.email}`}>say hello</a>
+          <a class="btn ghost" href={site.socials[0].url} target="_blank" rel="noopener noreferrer">github ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="skills-grid">
+      {skills.map((s, i) => (
+        <div class="card skill-group" data-reveal style={`--i:${i + 1}`}>
+          <h3>{s.group}</h3>
+          <ul>{s.items.map((it) => <li>{it}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="section container" style="padding-top:0;">
+    <SectionHeading kicker="04 — journey" title={`so far, <span class="grad-text">so shipped</span>`} />
+    <ul class="timeline">
+      {timeline.map((t, i) => (
+        <li data-reveal style={`--i:${i}`}>
+          <span class="tl-year">{t.year}</span>
+          <h3>{t.title}</h3>
+          <p>{t.text}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+</Base>

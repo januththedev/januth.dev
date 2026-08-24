@@ -1,0 +1,26 @@
+---
+import { site } from '../config/site';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <h2 class="foot-cta">
+      let's build something <span class="grad-text">worth staring at</span><span class="blink">_</span>
+    </h2>
+
+    <div class="foot-links">
+      <a class="plink" href="/projects/">~/projects</a>
+      <a class="plink" href="/about/">~/about</a>
+      {site.socials.map((s) => (
+        <a class="plink" href={s.url} target="_blank" rel="noopener noreferrer">~/{s.label}</a>
+      ))}
+    </div>
+
+    <div class="foot-base">
+      <span>© {year} {site.name} — hand-built, no templates</span>
+      <span class="hint">psst — press <kbd>`</kbd> anywhere and type <kbd>help</kbd></span>
+      <span><span id="foot-greeting">hello</span>, visitor · your time <span id="foot-clock">--:--</span></span>
+    </div>
+  </div>
+</footer>

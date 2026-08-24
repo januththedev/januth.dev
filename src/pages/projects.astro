@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { site } from '../config/site';
+---
+
+<Base
+  title="projects"
+  description="Live GitHub pulse — repos, languages and stats pulled straight from januththedev's GitHub."
+>
+  <section class="section container page-head">
+    <SectionHeading
+      kicker="02 — projects"
+      title={`the <span class="grad-text">live pulse</span>`}
+      sub={`pulled straight from github.com/${site.github.username} — stars, languages and last pushes, always current. no hand-maintained lists.`}
+    />
+
+    <div class="chips" id="repo-filters" role="group" aria-label="Filter repositories by language"></div>
+    <div class="repo-grid" id="repo-grid" aria-live="polite">
+      <!-- skeletons while data loads -->
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+    <div id="data-badge-slot"></div>
+
+    <noscript>
+      <div class="card" style="padding:22px; margin-top:26px;">
+        <p style="margin:0;">
+          The live GitHub feed needs JavaScript. In the meantime,
+          everything lives at
+          <a href={`https://github.com/${site.github.username}`} style="color:var(--accent); text-decoration:underline;">
+            github.com/${site.github.username}
+          </a>.
+        </p>
+      </div>
+    </noscript>
+  </section>
+</Base>

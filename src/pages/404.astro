@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="404 — lost signal"
+  description="This page drifted into the void. Play the game while you're here."
+>
+  <section class="section container page-head" style="text-align:center;">
+    <span class="kicker">404 — signal lost</span>
+    <h1 class="section-title">this page fell into <span class="grad-text">the void</span></h1>
+    <p class="section-sub" style="margin-inline:auto;">
+      but every void has rules: catch the falling particles. miss three and you're back where
+      you started.
+    </p>
+
+    <div class="game-frame">
+      <canvas id="game-canvas" width="640" height="400" aria-label="Particle catch mini-game. Move with mouse, touch or arrow keys." role="img"></canvas>
+      <div class="game-hud">
+        <span>score <span id="game-score">0</span></span>
+        <span>lives <span id="game-lives">♥♥♥</span></span>
+        <button id="game-restart">restart</button>
+      </div>
+    </div>
+
+    <p class="mono" style="color:var(--muted); margin-top:30px; font-size:0.85rem;">
+      or type your way out: press <kbd style="border:1px solid var(--line); border-radius:5px; padding:1px 7px;">`</kbd>
+      and run <span style="color:var(--accent);">open home</span>
+    </p>
+    <p style="margin-top:18px;"><a class="btn ghost" href="/">← take me home</a></p>
+  </section>
+</Base>

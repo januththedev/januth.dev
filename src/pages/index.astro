@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import StatsStrip from '../components/StatsStrip.astro';
+import { site } from '../config/site';
+---
+
+<Base>
+  <Hero />
+
+  <section class="section container" id="work">
+    <SectionHeading
+      kicker="01 — selected work"
+      title={`things i've <span class="grad-text">made</span>`}
+      sub="a taste of what keeps me up at night. the full, always-current list lives on the projects page — pulled straight from GitHub."
+    />
+    <div class="teaser-grid">
+      {site.curated.map((c, i) => (
+        <a class="card teaser" href={c.href} style={`--i:${i + 1}`} data-reveal data-cursor>
+          <span class="t-kicker mono">{c.kicker}</span>
+          <h3>{c.title}</h3>
+          <p>{c.blurb}</p>
+          <span class="t-cta">{c.cta}</span>
+        </a>
+      ))}
+    </div>
+    <a class="more-link mono" href="/projects/">every repo i've pushed → live from github</a>
+  </section>
+
+  <StatsStrip />
+
+  <section class="section container">
+    <SectionHeading
+      kicker="02 — the human behind the commits"
+      title={`curious? <span class="grad-text">good.</span>`}
+      sub="full-stack leanings, creative-coder heart, professional tinkerer's hands."
+    />
+    <div style="--i:1" data-reveal>
+      <a class="btn ghost" href="/about/">read my story</a>
+    </div>
+  </section>
+</Base>

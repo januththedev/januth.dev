@@ -1,0 +1,33 @@
+---
+import { site } from '../config/site';
+---
+
+<section class="hero" id="hero">
+  <div id="hero-canvas-wrap" aria-hidden="true">
+    <canvas id="hero-canvas"></canvas>
+  </div>
+  <div class="hero-fallback grad-text" aria-hidden="true">{site.monogram}</div>
+
+  <div class="container hero-copy">
+    <p class="hero-kicker">~/{site.name.toLowerCase().replace(/\s+/g, '-')}</p>
+    <h1 class="hero-name">{site.name}</h1>
+    <p class="hero-roles">hello, i'm&nbsp;<span id="role-scramble">{site.roles[0]}</span></p>
+    <p class="hero-sub">
+      i make browsers do things they were never supposed to do — and occasionally,
+      exactly what they should.
+    </p>
+    <div class="hero-cta">
+      <a class="btn solid" href="/projects/">see projects</a>
+      <button class="btn ghost" data-term-open>open terminal</button>
+    </div>
+  </div>
+
+  <div class="scroll-cue mono" aria-hidden="true">scroll ↓</div>
+</section>
+
+<div class="preloader" id="preloader" aria-hidden="true">
+  <div class="pre-inner mono">
+    <span class="pre-logo grad-text">{site.monogram}</span>
+    <span id="pre-count">0%</span>
+  </div>
+</div>

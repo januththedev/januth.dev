@@ -1,0 +1,21 @@
+---
+import { site } from '../config/site';
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const link = (href: string) => {
+  const p = href.replace(/\/$/, '') || '/';
+  return p === path ? 'active' : '';
+};
+---
+
+<header class="site-header">
+  <div class="container header-row">
+    <a href="/" class="logo grad-text" id="logo-btn" aria-label={`${site.monogram} — home`}>{site.monogram}</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/projects/" class={link('/projects')}>projects</a>
+      <a href="/about/" class={link('/about')}>about</a>
+    </nav>
+    <button class="term-open-btn" data-term-open aria-label="Open terminal">
+      <span class="label">~ terminal</span><span class="key">`</span>
+    </button>
+  </div>
+</header>
