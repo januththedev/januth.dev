@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { site } from '../../config/site';
 import { AsciiEffect } from 'three/examples/jsm/effects/AsciiEffect.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
@@ -16,11 +15,9 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // camera keyframes from the original — proven composition over four segments
 const KEYFRAMES = [
-  // opening: straight-on, whole object visible and spinning (the original's
-  // inside-the-head shot only works for a solid mesh — hollow letters read as noise)
   {
-    rx: -0.06, ry: 0.1, rz: 0.0,
-    px: 0.0, py: 0.0, pz: 3.35,
+    rx: 1.5707953337814393, ry: -9.503825893487959e-7, rz: 1.2544634559949106,
+    px: -0.18851380350171026, py: 0.003374259693436188, pz: 0.03300631548899701,
   },
   {
     px: -2.1797208198865823, py: 0.7456858904043902, pz: 1.259941607611314,
@@ -69,12 +66,7 @@ export async function initJourneyHead(container: HTMLElement): Promise<JourneyHe
   material.flatShading = true;
   material.side = THREE.DoubleSide;
 
-  // phones get a slightly coarser grid: chunkier chars (more drama) + cheaper frames
-  const portrait = innerWidth < 720;
-  const effect = new AsciiEffect(renderer, ' .:-+*=%@#', {
-    invert: true,
-    resolution: portrait ? 0.16 : 0.205,
-  });
+  const effect = new AsciiEffect(renderer, ' .:-+*=%@#', { invert: true, resolution: 0.205 });
   effect.setSize(innerWidth, innerHeight);
   const dom = effect.domElement as HTMLElement;
   dom.classList.add('jn-ascii-frame');
@@ -103,15 +95,19 @@ export async function initJourneyHead(container: HTMLElement): Promise<JourneyHe
     hasModel = true;
   };
 
-  // STL is opt-in (site.avatarStl) so we don't 404-probe on every visit;
-  // drop a model at public/models/avatar.stl and flip the flag to use it
-  if (site.avatarStl) {
-    await new Promise<void>((resolve) => {
-      new STLLoader().load('/models/avatar.stl', (geometry) => {
-        applyGeometry(geometry);
-        resolve();
-      }, undefined, () => resolve());
-    });
+  // STL if the user supplies one, else extruded JN from the bundled bold font
+  try {
+    const probe = await fetch('/models/avatar.stl', { method: 'HEAD' });
+    if (probe.ok) {
+      await new Promise<void>((resolve, reject) => {
+        new STLLoader().load('/models/avatar.stl', (geometry) => {
+          applyGeometry(geometry);
+          resolve();
+        }, undefined, reject);
+      });
+    }
+  } catch {
+    /* fall through to text */
   }
 
   if (!hasModel) {
@@ -145,20 +141,16 @@ export async function initJourneyHead(container: HTMLElement): Promise<JourneyHe
     lastMs = now;
     mesh.rotation.z += dt / 3; // the signature spin
 
-    // fly the camera through the keyframes on journey progress; on portrait
-    // phones the framing is recomposed (slightly back, head eased right) so the
-    // object stays dominant instead of shrinking with the viewport
-    const zoom = portrait ? 1.28 : 1;
-    const shiftX = portrait ? -0.45 : 0;
+    // fly the camera through the keyframes on journey progress
     const u = Math.min(progress, 0.9999) * (KEYFRAMES.length - 1);
     const i = Math.floor(u);
     const f = u - i;
     const a = KEYFRAMES[i];
     const b = KEYFRAMES[i + 1];
     camera.position.set(
-      (a.px + (b.px - a.px) * f) * zoom + shiftX + 0.2 + (innerWidth - 1536) * 0.0004,
-      (a.py + (b.py - a.py) * f) * zoom,
-      (a.pz + (b.pz - a.pz) * f) * zoom
+      a.px + (b.px - a.px) * f + 0.2 + (innerWidth - 1536) * 0.0004,
+      a.py + (b.py - a.py) * f,
+      a.pz + (b.pz - a.pz) * f
     );
     camera.rotation.set(
       a.rx + (b.rx - a.rx) * f,

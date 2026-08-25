@@ -327,8 +327,7 @@ h1, h2, h3 {
   color: var(--soft);
   pointer-events: none;
   user-select: none;
-  /* faint watermark — the ASCII object is the star, this adds depth behind it */
-  opacity: calc((1 - var(--t, 0)) * 0.16);
+  opacity: calc(1 - var(--t, 0) * 1.7);
 }
 
 .panel {
@@ -919,28 +918,8 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
   .term-open-btn .label { display: none; }
   .jn-term { height: 62vh; }
   .foot-base { justify-content: center; text-align: center; }
-
-  /* journey beats on small screens: same cinematic overlap, just aligned —
-     counters reflow into a centered 2×2 grid, no boxes, nothing clips */
-  #data {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: center;
-    justify-items: center;
-    gap: 30px 14px;
-    padding-inline: 18px;
-  }
-  .data-container { width: auto; min-width: 0; }
-  .data-number { font-size: clamp(2.6rem, 14vw, 3.8rem); }
-  .data-title { font-size: 0.74rem; text-align: center; }
-  .frag { font-size: clamp(1.8rem, 7.2vw, 2.6rem); }
-  .create-line { font-size: clamp(1.2rem, 5vw, 1.6rem); }
-  #alot {
-    white-space: normal;
-    text-align: center;
-    padding-inline: 20px;
-    font-size: clamp(0rem, calc((var(--t, 0) - 0.76) * 140vw), 15vw);
-  }
+  .hero-copy { width: calc(100% - 48px); }
+  .hero-name { white-space: normal; }
 }
 
 /* ---------- reduced motion ---------- */
