@@ -327,7 +327,8 @@ h1, h2, h3 {
   color: var(--soft);
   pointer-events: none;
   user-select: none;
-  opacity: calc(1 - var(--t, 0) * 1.7);
+  /* faint watermark — the ASCII object is the star, this adds depth behind it */
+  opacity: calc((1 - var(--t, 0)) * 0.16);
 }
 
 .panel {

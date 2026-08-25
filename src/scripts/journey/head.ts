@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { site } from '../../config/site';
 import { AsciiEffect } from 'three/examples/jsm/effects/AsciiEffect.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
@@ -15,9 +16,11 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // camera keyframes from the original — proven composition over four segments
 const KEYFRAMES = [
+  // opening: straight-on, whole object visible and spinning (the original's
+  // inside-the-head shot only works for a solid mesh — hollow letters read as noise)
   {
-    rx: 1.5707953337814393, ry: -9.503825893487959e-7, rz: 1.2544634559949106,
-    px: -0.18851380350171026, py: 0.003374259693436188, pz: 0.03300631548899701,
+    rx: -0.06, ry: 0.1, rz: 0.0,
+    px: 0.0, py: 0.0, pz: 3.35,
   },
   {
     px: -2.1797208198865823, py: 0.7456858904043902, pz: 1.259941607611314,
@@ -100,19 +103,15 @@ export async function initJourneyHead(container: HTMLElement): Promise<JourneyHe
     hasModel = true;
   };
 
-  // STL if the user supplies one, else extruded JN from the bundled bold font
-  try {
-    const probe = await fetch('/models/avatar.stl', { method: 'HEAD' });
-    if (probe.ok) {
-      await new Promise<void>((resolve, reject) => {
-        new STLLoader().load('/models/avatar.stl', (geometry) => {
-          applyGeometry(geometry);
-          resolve();
-        }, undefined, reject);
-      });
-    }
-  } catch {
-    /* fall through to text */
+  // STL is opt-in (site.avatarStl) so we don't 404-probe on every visit;
+  // drop a model at public/models/avatar.stl and flip the flag to use it
+  if (site.avatarStl) {
+    await new Promise<void>((resolve) => {
+      new STLLoader().load('/models/avatar.stl', (geometry) => {
+        applyGeometry(geometry);
+        resolve();
+      }, undefined, () => resolve());
+    });
   }
 
   if (!hasModel) {

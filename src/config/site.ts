@@ -29,6 +29,8 @@ export const site = {
     username: 'januththedev',
     useMock: false,
   },
+  /** true → the journey head loads public/models/avatar.stl instead of the JN letterform */
+  avatarStl: false,
   /** hand-curated landing-page teasers (GitHub-pulled content intentionally NOT here) */
   curated: [
     {
