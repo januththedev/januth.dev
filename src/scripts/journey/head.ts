@@ -15,9 +15,12 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // camera keyframes from the original — proven composition over four segments
 const KEYFRAMES = [
+  // landing: camera just in front of the letters, close enough that they
+  // overflow the frame — the ASCII animation fills the entire screen on every
+  // device (full character wall on phones, edge-to-edge on desktop)
   {
-    rx: 1.5707953337814393, ry: -9.503825893487959e-7, rz: 1.2544634559949106,
-    px: -0.18851380350171026, py: 0.003374259693436188, pz: 0.03300631548899701,
+    rx: -0.06, ry: 0.1, rz: 0.0,
+    px: 0.0, py: 0.04, pz: 0.72,
   },
   {
     px: -2.1797208198865823, py: 0.7456858904043902, pz: 1.259941607611314,
