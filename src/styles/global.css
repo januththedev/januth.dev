@@ -918,8 +918,40 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
   .term-open-btn .label { display: none; }
   .jn-term { height: 62vh; }
   .foot-base { justify-content: center; text-align: center; }
-  .hero-copy { width: calc(100% - 48px); }
-  .hero-name { white-space: normal; }
+
+  /* journey beats on small screens: stack, center, frosted backdrop so the
+     ASCII head stays readable behind the text */
+  #data {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+  }
+  .data-container {
+    width: auto;
+    min-width: 210px;
+    background: rgba(10, 10, 14, 0.6);
+    backdrop-filter: blur(9px);
+    -webkit-backdrop-filter: blur(9px);
+    border: 1px solid var(--line);
+    padding: 10px 22px;
+  }
+  .data-number { font-size: 2.1rem; }
+  .data-title { font-size: 0.72rem; }
+  #intro .intro-box {
+    background: rgba(10, 10, 14, 0.6);
+    backdrop-filter: blur(9px);
+    -webkit-backdrop-filter: blur(9px);
+    border: 1px solid var(--line);
+    padding: 18px 22px;
+    width: calc(100% - 8px);
+  }
+  #alot {
+    white-space: normal;
+    text-align: center;
+    padding-inline: 20px;
+    font-size: clamp(0rem, calc((var(--t, 0) - 0.76) * 120vw), 13vw);
+  }
 }
 
 /* ---------- reduced motion ---------- */

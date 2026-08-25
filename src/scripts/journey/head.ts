@@ -141,16 +141,18 @@ export async function initJourneyHead(container: HTMLElement): Promise<JourneyHe
     lastMs = now;
     mesh.rotation.z += dt / 3; // the signature spin
 
-    // fly the camera through the keyframes on journey progress
+    // fly the camera through the keyframes on journey progress;
+    // narrow screens pull the camera radially back so the head frames itself
+    const zoom = innerWidth < 720 ? 1.8 : 1;
     const u = Math.min(progress, 0.9999) * (KEYFRAMES.length - 1);
     const i = Math.floor(u);
     const f = u - i;
     const a = KEYFRAMES[i];
     const b = KEYFRAMES[i + 1];
     camera.position.set(
-      a.px + (b.px - a.px) * f + 0.2 + (innerWidth - 1536) * 0.0004,
-      a.py + (b.py - a.py) * f,
-      a.pz + (b.pz - a.pz) * f
+      (a.px + (b.px - a.px) * f) * zoom + 0.2 + (innerWidth - 1536) * 0.0004,
+      (a.py + (b.py - a.py) * f) * zoom,
+      (a.pz + (b.pz - a.pz) * f) * zoom + (zoom - 1) * 1.4
     );
     camera.rotation.set(
       a.rx + (b.rx - a.rx) * f,
