@@ -919,33 +919,19 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
   .jn-term { height: 62vh; }
   .foot-base { justify-content: center; text-align: center; }
 
-  /* journey beats on small screens: stack, center, frosted backdrop so the
-     ASCII head stays readable behind the text */
+  /* journey beats on small screens: same cinematic overlap, just aligned —
+     counters reflow into a centered 2×2 grid, no boxes, nothing clips */
   #data {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: center;
+    justify-items: center;
+    gap: 20px 14px;
+    padding-inline: 18px;
   }
-  .data-container {
-    width: auto;
-    min-width: 210px;
-    background: rgba(10, 10, 14, 0.6);
-    backdrop-filter: blur(9px);
-    -webkit-backdrop-filter: blur(9px);
-    border: 1px solid var(--line);
-    padding: 10px 22px;
-  }
-  .data-number { font-size: 2.1rem; }
-  .data-title { font-size: 0.72rem; }
-  #intro .intro-box {
-    background: rgba(10, 10, 14, 0.6);
-    backdrop-filter: blur(9px);
-    -webkit-backdrop-filter: blur(9px);
-    border: 1px solid var(--line);
-    padding: 18px 22px;
-    width: calc(100% - 8px);
-  }
+  .data-container { width: auto; min-width: 0; }
+  .data-number { font-size: 2rem; }
+  .data-title { font-size: 0.72rem; text-align: center; }
   #alot {
     white-space: normal;
     text-align: center;
