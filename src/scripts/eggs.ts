@@ -27,6 +27,7 @@ export function initEggs(): void {
   document.addEventListener(
     'keydown',
     (e) => {
+      if (!e.key) return;
       const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       kIdx = key === KONAMI[kIdx] ? kIdx + 1 : key === KONAMI[0] ? 1 : 0;
       if (kIdx === KONAMI.length) {
@@ -67,7 +68,7 @@ export function initEggs(): void {
   try {
     console.log(
       '%cJN%c there is more here than meets the eye.\npress ` anywhere and type help.',
-      'font-size:28px;font-weight:700;background:linear-gradient(90deg,#22d3ee,#8b5cf6);color:#050508;padding:4px 12px;border-radius:8px;',
+      'font-size:28px;font-weight:700;background:#21dd84;color:#050508;padding:4px 12px;',
       'font-family:monospace;color:#9a9aa8;'
     );
   } catch {}

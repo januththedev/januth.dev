@@ -93,8 +93,11 @@ export function cycleWords(rotator: HTMLElement, intervalMs = 2200): () => void 
     w.style.top = i === 0 ? '0' : '1.2em';
     w.style.opacity = i === 0 ? '1' : '0';
   });
+  // auto-rotating text with no pause control is a motion problem: leave the first word
+  if (prefersReducedMotion()) return () => {};
   let idx = 0;
   const timer = window.setInterval(() => {
+    if (document.hidden) return;
     const prev = words[idx];
     idx = (idx + 1) % words.length;
     const next = words[idx];
@@ -102,7 +105,7 @@ export function cycleWords(rotator: HTMLElement, intervalMs = 2200): () => void 
     prev.style.opacity = '0';
     next.style.top = '0';
     next.style.opacity = '1';
-  }, prefersReducedMotion() ? intervalMs * 3 : intervalMs);
+  }, intervalMs);
   return () => clearInterval(timer);
 }
 

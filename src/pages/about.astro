@@ -1,88 +1,53 @@
 ---
 import Base from '../layouts/Base.astro';
 import SectionHeading from '../components/SectionHeading.astro';
-import { site } from '../config/site';
+import { site, formatWhen } from '../config/site';
+import { getBuildData } from '../lib/build-data';
 
-const skills = [
-  {
-    group: 'languages',
-    items: ['TypeScript', 'JavaScript', 'Python', 'HTML/CSS', 'SQL', 'learning Rust'],
-  },
-  {
-    group: 'frontend',
-    items: ['Astro', 'React', 'Three.js / WebGL', 'CSS wizardry', 'canvas APIs'],
-  },
-  {
-    group: 'backend & tools',
-    items: ['Node.js', 'REST APIs', 'Git (fluently)', 'Linux', 'Docker basics'],
-  },
-  {
-    group: 'currently exploring',
-    items: ['shaders', 'game dev', 'systems design', 'whatever looks fun'],
-  },
-];
-
-const timeline = [
-  {
-    year: 'the origin',
-    title: 'first line of code',
-    text: "opened an editor out of curiosity. never really closed it again.",
-  },
-  {
-    year: 'level up',
-    title: 'full-stack arc',
-    text: 'APIs, databases, deployment pipelines — learned to ship whole things, not just pixels.',
-  },
-  {
-    year: 'the twist',
-    title: 'creative coding rabbit hole',
-    text: 'discovered WebGL and interactive fiction-in-the-browser. this portfolio is the receipt.',
-  },
-  {
-    year: 'now',
-    title: 'building in public',
-    text: 'shipping tools, experiments and open source as januththedev. the graph below never lies.',
-  },
-];
+const { stats } = await getBuildData();
+const newTab = { target: '_blank', rel: 'noopener noreferrer' };
+const firstName = site.name.split(' ')[0].toLowerCase();
 ---
 
 <Base
-  title="about"
-  description="Who is Januth Nimnal? Full-stack developer, creative coder, tinkerer. Skills, story and ways to say hi."
+  title={`about — ${site.role} in ${site.location}`}
+  description={`About ${site.name}: ${site.headline}. Skills, awards, timeline and how to get in touch.`}
 >
   <section class="section container page-head">
-    <SectionHeading
-      kicker="03 — about"
-      title={`hi, i'm <span style="color:var(--accent)">januth</span>`}
-    />
+    <SectionHeading as="h1" kicker="about" title={`hi, i'm <span class="accent">${firstName}</span>`} />
 
     <div class="about-grid">
       <div class="portrait display" data-reveal aria-hidden="true">{site.monogram}</div>
       <div class="about-bio" data-reveal style="--i:1">
         <p>
-          i'm a developer who thinks <strong>software should feel alive</strong>. by day that
-          means full-stack work — clean APIs, sane data models, interfaces that don't fight
-          back. by night it means teaching browsers tricks: particle systems, terminals inside
-          web pages, games hidden behind 404s.
+          i'm a <strong>{site.role} based in {site.location}</strong>. most of what i build
+          lives under one name: <a href="https://orinai.org" {...newTab}>Orin AI</a>, a bilingual
+          (Sinhala / English) AI workspace that grew into a whole ecosystem — a model router, a
+          browser-based Linux console, an MCP server, a CLI and a VS Code extension.
         </p>
         <p>
-          i tinker across the stack because <strong>boring boundaries make boring
-          software</strong>. if it involves code, motion, or a suspicious amount of console.log,
-          i'm interested.
+          i think <strong>software should feel alive</strong>. that's why this site has a working
+          shell you can type real commands into, a WebGL scene rendered as text, and a game
+          hidden behind its 404. no UI framework — Astro for the pages, plain TypeScript for
+          everything that moves.
         </p>
         <p>
-          this site itself is the manifesto: hand-rolled animations, a working shell you can
-          type real commands into, and zero UI frameworks. view source — it's all there.
+          everything is public: <strong>{stats.repos} repos</strong> on github, {stats.live} of
+          them deployed. the <a href="/projects/">projects page</a> pulls them live.
         </p>
         <div class="contact-actions" style="margin-top:26px;">
-          <a class="cybtn" href={`mailto:${site.email}`}>say hello<span class="tag">mail</span></a>
-          <a class="cybtn ghosted" href={site.socials[0].url} target="_blank" rel="noopener noreferrer">github<span class="tag">↗</span></a>
+          <a class="cybtn" href={`mailto:${site.email}`}>say hello<span class="tag" aria-hidden="true">mail</span></a>
+          {site.cvUrl && (
+            <a class="cybtn ghosted" href={site.cvUrl} download>download cv<span class="tag" aria-hidden="true">pdf</span></a>
+          )}
+          <a class="cybtn ghosted" href={site.socials[0].url} {...newTab}>github<span class="tag" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
         </div>
       </div>
     </div>
 
+    <h2 class="sr-only">skills</h2>
     <div class="skills-grid">
-      {skills.map((s, i) => (
+      {site.skills.map((s, i) => (
         <div class="card skill-group" data-reveal style={`--i:${i + 1}`}>
           <h3>{s.group}</h3>
           <ul>{s.items.map((it) => <li>{it}</li>)}</ul>
@@ -91,16 +56,49 @@ const timeline = [
     </div>
   </section>
 
+  {site.achievements.length > 0 && (
+    <section class="section container" style="padding-top:0;" aria-labelledby="awards-title">
+      <SectionHeading kicker="achievements" title={`certified, shipped, <span class="accent">proven</span>`} />
+      <ol class="timeline" id="awards-title">
+        {site.achievements.map((a, i) => (
+          <li data-reveal style={`--i:${i}`}>
+            <span class="tl-year">{formatWhen(a.when)}</span>
+            <h3>
+              {a.href ? <a href={a.href} {...newTab}>{a.title} — {a.event}</a> : `${a.title} — ${a.event}`}
+            </h3>
+            {a.text && <p>{a.text}</p>}
+          </li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  <section class="section container" style="padding-top:0;" aria-labelledby="faq-title">
+    <SectionHeading kicker="faq" title={`quick <span class="accent">answers</span>`} />
+    <dl class="faq" id="faq-title">
+      {site.faq.map((f, i) => (
+        <div class="faq-item" data-reveal style={`--i:${i}`}>
+          <dt>{f.q}</dt>
+          <dd>{f.a}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
   <section class="section container" style="padding-top:0;">
-    <SectionHeading kicker="04 — journey" title={`so far, <span style="color:var(--accent)">so shipped</span>`} />
-    <ul class="timeline">
-      {timeline.map((t, i) => (
+    <SectionHeading kicker="timeline" title={`so far, <span class="accent">so shipped</span>`} />
+    <ol class="timeline">
+      {site.milestones.map((t, i) => (
         <li data-reveal style={`--i:${i}`}>
-          <span class="tl-year">{t.year}</span>
-          <h3>{t.title}</h3>
+          <span class="tl-year">{formatWhen(t.when)}</span>
+          <h3>
+            {t.href ? (
+              <a href={t.href} {...(t.href.startsWith('/') ? {} : newTab)}>{t.title}</a>
+            ) : t.title}
+          </h3>
           <p>{t.text}</p>
         </li>
       ))}
-    </ul>
+    </ol>
   </section>
 </Base>

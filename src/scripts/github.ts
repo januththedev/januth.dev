@@ -8,9 +8,22 @@ export interface Repo {
   stargazers_count: number;
   forks_count: number;
   topics: string[];
+  /** deployed site, when the repo declares one */
+  homepage: string | null;
+  /** ISO date of the last push */
+  pushed_at: string | null;
 }
 
-export type DataSource = 'live' | 'cache' | 'mock';
+/** where a repo list came from; 'error' means "GitHub unreachable, nothing cached" */
+export type DataSource = 'live' | 'cache' | 'mock' | 'error';
+
+export interface RepoStats {
+  /** public, non-fork, non-archived repos */
+  repos: number;
+  /** of those, how many declare a deployed homepage */
+  live: number;
+  languages: number;
+}
 
 /** GitHub language colors (subset — anything unknown falls back to the accent) */
 export const LANG_COLORS: Record<string, string> = {
@@ -22,6 +35,7 @@ export const LANG_COLORS: Record<string, string> = {
   Rust: '#dea584',
   Go: '#00ADD8',
   Java: '#b07219',
+  Kotlin: '#A97BFF',
   C: '#555555',
   'C++': '#f34b7d',
   'C#': '#178600',
@@ -31,108 +45,36 @@ export const LANG_COLORS: Record<string, string> = {
   Astro: '#ff5a03',
 };
 
-const CACHE_KEY = `jn:repos:v1:${site.github.username}`;
+const CACHE_KEY = `jn:repos:v2:${site.github.username}`;
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 /**
- * Demo dataset used while `site.github.useMock` is true (or when the network
- * and cache both fail). Shaped exactly like the real API response so the flip
- * to live data changes nothing downstream.
- *
- * Modeled on the repo mix of a working dev portfolio (flagship OSS tool,
- * blog, graders/bots, hardware toy, utilities) — swap these entries for your
- * own real repos by flipping useMock, or edit them here until then.
+ * Demo data for local development ONLY. Returned solely when
+ * `site.github.useMock` is true — it is never a fallback for real visitors:
+ * a failed fetch yields an honest empty/error state instead of invented work.
  */
 const MOCK_REPOS: Repo[] = [
   {
-    name: 'jnfont',
-    description:
-      'Free web-font subsetting service — ship beautiful custom type without shipping megabytes.',
-    html_url: 'https://github.com/januththedev/jnfont',
-    language: 'JavaScript',
-    stargazers_count: 187,
-    forks_count: 21,
-    topics: ['fonts', 'performance', 'web'],
-  },
-  {
-    name: 'autograde',
-    description:
-      'Coding-assignment submission + automated grading pipeline for classrooms. Teachers sleep, robots grade.',
-    html_url: 'https://github.com/januththedev/autograde',
+    name: 'demo-repo-one',
+    description: 'Placeholder repo shown only while useMock is on.',
+    html_url: `https://github.com/${site.github.username}`,
     language: 'TypeScript',
-    stargazers_count: 34,
-    forks_count: 6,
-    topics: ['education', 'ci', 'developer-tools'],
+    stargazers_count: 0,
+    forks_count: 0,
+    topics: ['demo'],
+    homepage: null,
+    pushed_at: null,
   },
   {
-    name: 'particle-lab',
-    description:
-      'Playground of GPU particle systems — attractors, springs and things that explode politely.',
-    html_url: 'https://github.com/januththedev/particle-lab',
-    language: 'JavaScript',
-    stargazers_count: 64,
-    forks_count: 5,
-    topics: ['webgl', 'threejs', 'particles'],
-  },
-  {
-    name: 'grammar-gremlin',
-    description:
-      'Group-chat bot that enforces typos, proper nouns and capitalization before your teammates notice.',
-    html_url: 'https://github.com/januththedev/grammar-gremlin',
-    language: 'TypeScript',
-    stargazers_count: 28,
-    forks_count: 3,
-    topics: ['telegram-bot', 'nlp', 'fun'],
-  },
-  {
-    name: 'jn-blog',
-    description:
-      'My corner of the internet for tech write-ups, design breakdowns and postmortems of my own mistakes.',
-    html_url: 'https://github.com/januththedev/jn-blog',
-    language: 'Astro',
-    stargazers_count: 19,
-    forks_count: 2,
-    topics: ['blog', 'astro', 'website'],
-  },
-  {
-    name: 'midnight-renderer',
-    description:
-      'Software rasterizer built to finally understand what GPUs do for a living.',
-    html_url: 'https://github.com/januththedev/midnight-renderer',
-    language: 'Rust',
-    stargazers_count: 52,
-    forks_count: 8,
-    topics: ['rust', 'graphics', 'rendering'],
-  },
-  {
-    name: 'esp32-synth',
-    description:
-      'Course final project turned obsession — a playable digital instrument on an ESP32 and spare parts.',
-    html_url: 'https://github.com/januththedev/esp32-synth',
-    language: 'C++',
-    stargazers_count: 11,
-    forks_count: 1,
-    topics: ['esp32', 'audio', 'hardware'],
-  },
-  {
-    name: 'win-taming-guide',
-    description:
-      'Fresh-Windows-to-power-setup in one sitting: scripts, tweaks and the registry keys worth touching.',
-    html_url: 'https://github.com/januththedev/win-taming-guide',
-    language: 'PowerShell',
-    stargazers_count: 15,
-    forks_count: 4,
-    topics: ['dotfiles', 'windows', 'setup'],
-  },
-  {
-    name: 'where-is-my-bus',
-    description:
-      'Live transit availability analyzer for my city’s buses, because timetables are fiction.',
-    html_url: 'https://github.com/januththedev/where-is-my-bus',
-    language: 'TypeScript',
-    stargazers_count: 9,
-    forks_count: 1,
-    topics: ['scraping', 'maps', 'civic-tech'],
+    name: 'demo-repo-two',
+    description: 'Another placeholder, in a second language so the filter has something to do.',
+    html_url: `https://github.com/${site.github.username}`,
+    language: 'Python',
+    stargazers_count: 0,
+    forks_count: 0,
+    topics: ['demo'],
+    homepage: null,
+    pushed_at: null,
   },
 ];
 
@@ -146,7 +88,9 @@ function readCache(): CacheShape | null {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CacheShape;
-    return Array.isArray(parsed?.repos) ? parsed : null;
+    return Array.isArray(parsed?.repos) && parsed.repos.every((r) => Array.isArray(r?.topics))
+      ? parsed
+      : null;
   } catch {
     return null;
   }
@@ -168,9 +112,13 @@ interface GhRepo {
   stargazers_count: number;
   forks_count: number;
   fork: boolean;
+  archived?: boolean;
+  homepage?: string | null;
   topics?: string[];
   pushed_at: string;
 }
+
+const isUrl = (s: string | null | undefined): s is string => !!s && /^https?:\/\//i.test(s);
 
 function mapRepo(r: GhRepo): Repo {
   return {
@@ -181,9 +129,47 @@ function mapRepo(r: GhRepo): Repo {
     stargazers_count: r.stargazers_count,
     forks_count: r.forks_count,
     topics: (r.topics ?? []).slice(0, 4),
+    homepage: isUrl(r.homepage) ? r.homepage : null,
+    pushed_at: r.pushed_at ?? null,
   };
 }
 
+/**
+ * One request to the public API. Used by the browser AND by the Astro build
+ * (pages fetch at build time so real cards are in the HTML for crawlers, link
+ * previews and no-JS visitors). Throws on any failure.
+ */
+export async function fetchRepos(
+  username: string,
+  limit = 12
+): Promise<{ repos: Repo[]; stats: RepoStats }> {
+  const res = await fetch(
+    `https://api.github.com/users/${username}/repos?sort=pushed&per_page=100`,
+    { headers: { Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(8000) }
+  );
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+  const own = ((await res.json()) as GhRepo[]).filter((r) => !r.fork && !r.archived);
+  // stars first, then repos that explain themselves, then most recently pushed
+  const repos = own
+    .sort(
+      (a, b) =>
+        b.stargazers_count - a.stargazers_count ||
+        Number(!!b.description) - Number(!!a.description) ||
+        +new Date(b.pushed_at) - +new Date(a.pushed_at)
+    )
+    .slice(0, limit)
+    .map(mapRepo);
+  return {
+    repos,
+    stats: {
+      repos: own.length,
+      live: own.filter((r) => isUrl(r.homepage)).length,
+      languages: new Set(own.map((r) => r.language).filter(Boolean)).size,
+    },
+  };
+}
+
+/** browser entry point: cache → network → stale cache → honest error */
 export async function getRepos(): Promise<{ repos: Repo[]; source: DataSource }> {
   const { username, useMock } = site.github;
 
@@ -195,23 +181,13 @@ export async function getRepos(): Promise<{ repos: Repo[]; source: DataSource }>
   }
 
   try {
-    const res = await fetch(
-      `https://api.github.com/users/${username}/repos?sort=pushed&per_page=100`,
-      { headers: { Accept: 'application/vnd.github+json' } }
-    );
-    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    const json = (await res.json()) as GhRepo[];
-    const repos = json
-      .filter((r) => !r.fork)
-      .sort((a, b) => b.stargazers_count - a.stargazers_count || +new Date(b.pushed_at) - +new Date(a.pushed_at))
-      .slice(0, 9)
-      .map(mapRepo);
-    if (!repos.length) throw new Error('no public repos');
-    writeCache(repos);
+    const { repos } = await fetchRepos(username);
+    if (repos.length) writeCache(repos);
     return { repos, source: 'live' };
   } catch {
-    // network failed — serve stale cache if we have any, else demo data
+    // network failed or rate-limited: stale cache if we have one, otherwise
+    // say so. never invent repos for a real visitor.
     if (cached) return { repos: cached.repos, source: 'cache' };
-    return { repos: MOCK_REPOS, source: 'mock' };
+    return { repos: [], source: 'error' };
   }
 }

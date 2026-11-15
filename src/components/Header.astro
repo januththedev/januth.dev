@@ -1,21 +1,19 @@
 ---
 import { site } from '../config/site';
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
-const link = (href: string) => {
-  const p = href.replace(/\/$/, '') || '/';
-  return p === path ? 'active' : '';
-};
+const current = (href: string) => ((href.replace(/\/$/, '') || '/') === path ? 'page' : undefined);
 ---
 
 <header class="site-header" id="site-header">
   <div class="container header-row">
-    <a href="/" class="logo" id="logo-btn" aria-label={`${site.monogram} — home`}>{site.monogram}</a>
+    <a href="/" class="logo" id="logo-btn" aria-label={`${site.name} — home`}>{site.monogram}</a>
     <nav class="site-nav" aria-label="Main">
-      <a href="/projects/" class={link('/projects')}>projects</a>
-      <a href="/about/" class={link('/about')}>about</a>
+      <a href="/projects/" aria-current={current('/projects')} data-scramble>projects</a>
+      <a href="/about/" aria-current={current('/about')} data-scramble>about</a>
+      <a href="#contact" data-scramble>contact</a>
     </nav>
-    <button class="term-open-btn" data-term-open aria-label="Open terminal">
-      <span class="label">~ terminal</span><span class="key">`</span>
+    <button type="button" class="term-open-btn" data-term-open aria-label="Open terminal" aria-keyshortcuts="`">
+      <span class="label">~ terminal</span><span class="key" aria-hidden="true">`</span>
     </button>
   </div>
 </header>

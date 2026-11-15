@@ -1,20 +1,128 @@
 ---
-import '@fontsource/audiowide';
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/700.css';
+import '@fontsource/audiowide/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import '@fontsource/jetbrains-mono/latin-700.css';
 import '../styles/global.css';
+import audiowideUrl from '@fontsource/audiowide/files/audiowide-latin-400-normal.woff2?url';
 import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { site } from '../config/site';
+import { site, formatWhen } from '../config/site';
 
 interface Props {
   title?: string;
   description?: string;
+  /** where "skip to content" lands; the home page skips past the intro */
+  skipTo?: string;
+  noindex?: boolean;
 }
 
-const { title = site.title, description = site.description } = Astro.props;
+const { title = site.title, description = site.description, skipTo = '#main', noindex = false } = Astro.props;
 const fullTitle = title === site.title ? title : `${title} · ${site.name}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL('/og.png', Astro.site);
+
+const home = String(Astro.site);
+const awards = site.achievements.map((a) => `${a.title} — ${a.event} (${formatWhen(a.when)})`);
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': `${home}#website`,
+      url: home,
+      name: site.name,
+      alternateName: [site.monogram, 'januth.dev'],
+      description: site.description,
+      inLanguage: 'en',
+      publisher: { '@id': `${home}#person` },
+    },
+    {
+      '@type': Astro.url.pathname.startsWith('/about') ? 'ProfilePage' : 'WebPage',
+      '@id': `${canonical}#webpage`,
+      url: canonical,
+      name: fullTitle,
+      description,
+      isPartOf: { '@id': `${home}#website` },
+      about: { '@id': `${home}#person` },
+      ...(Astro.url.pathname.startsWith('/about') ? { mainEntity: { '@id': `${home}#person` } } : {}),
+    },
+    {
+      '@type': 'Person',
+      '@id': `${home}#person`,
+      name: site.name,
+      givenName: site.name.split(' ')[0],
+      familyName: site.name.split(' ').slice(1).join(' '),
+      url: home,
+      image: ogImage,
+      jobTitle: ['Full-Stack Developer', 'AI Engineer', 'Founder'],
+      description: site.bio.join(' '),
+      disambiguatingDescription: site.headline,
+      email: `mailto:${site.email}`,
+      nationality: { '@type': 'Country', name: 'Sri Lanka' },
+      homeLocation: { '@type': 'Country', name: 'Sri Lanka' },
+      address: { '@type': 'PostalAddress', addressCountry: 'LK' },
+      knowsAbout: [
+        'Full-stack web development', 'Artificial intelligence', 'Large language models', 'Multi-agent systems',
+        'Model routing', 'Model Context Protocol (MCP)', 'WebGL', 'Three.js', 'TypeScript', 'Python', 'React', 'Astro',
+        'Node.js', 'Developer tools', 'Linux', 'Cybersecurity', 'IoT automation', 'Web development',
+        'Software development', 'Telegram bots', 'Booking systems',
+      ],
+      hasCredential: ['IoT automation', 'Web development', 'Software development', 'Cybersecurity', 'Artificial intelligence'].map(
+        (field) => ({
+          '@type': 'EducationalOccupationalCredential',
+          credentialCategory: 'certificate',
+          name: `Certifications in ${field}`,
+          about: field,
+        })
+      ),
+      makesOffer: {
+        '@type': 'Offer',
+        itemOffered: { '@type': 'Service', name: 'Websites, web apps, AI products and automation for businesses' },
+        areaServed: 'Worldwide',
+      },
+      founder: { '@id': `${home}#orin` },
+      worksFor: { '@id': `${home}#orin` },
+      ...(awards.length ? { award: awards } : {}),
+      sameAs: [...site.socials.map((s) => s.url), 'https://orinai.org'],
+    },
+    {
+      '@type': 'Organization',
+      '@id': `${home}#orin`,
+      name: 'Orin AI',
+      url: 'https://orinai.org',
+      description: 'A bilingual (Sinhala / English) AI workspace and ecosystem of developer tools for Sri Lankan professionals.',
+      founder: { '@id': `${home}#person` },
+    },
+    ...(Astro.url.pathname.startsWith('/about')
+      ? [
+          {
+            '@type': 'FAQPage',
+            '@id': `${canonical}#faq`,
+            mainEntity: site.faq.map((f) => ({
+              '@type': 'Question',
+              name: f.q,
+              acceptedAnswer: { '@type': 'Answer', text: f.a },
+            })),
+          },
+        ]
+      : []),
+    ...site.featured.map((p) => ({
+      '@type': 'SoftwareApplication',
+      '@id': `${home}#${p.name.toLowerCase().replace(/\s+/g, '-')}`,
+      name: p.name,
+      description: `${p.oneLiner} ${p.detail}`,
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Web',
+      author: { '@id': `${home}#person` },
+      creator: { '@id': `${home}#person` },
+      dateCreated: p.since,
+      url: p.liveUrl ?? p.repoUrl,
+      sameAs: p.repoUrl,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    })),
+  ],
+};
 ---
 
 <!doctype html>
@@ -22,33 +130,72 @@ const fullTitle = title === site.title ? title : `${title} · ${site.name}`;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
+    <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#000000" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="preload" href={audiowideUrl} as="font" type="font/woff2" crossorigin />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#0a0a0e" />
+    <meta name="author" content={site.name} />
+    <meta name="robots" content={noindex ? 'noindex' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'} />
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="Summary for AI assistants" />
+    <link rel="me" href={site.socials[0].url} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content={site.name} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <title>{fullTitle}</title>
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${site.name} — ${site.role}`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
     <script is:inline>
-      // apply saved theme before first paint (hard loads; view transitions re-apply in app.ts)
+      // apply saved theme before first paint (view transitions re-apply in app.ts)
+      document.documentElement.classList.add('js');
+      // the intro owns the very first frame: lock the page before anything paints
+      // (landing.ts takes over from here; the checks mirror its own)
+      try {
+        if (location.pathname === '/' && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+          document.documentElement.classList.add('intro-lock', 'intro-pending');
+      } catch {}
       try {
         const t = localStorage.getItem('jn:theme');
         if (t) document.documentElement.dataset.theme = t;
       } catch {}
     </script>
+    <noscript>
+      <style>
+        [data-reveal] { opacity: 1 !important; transform: none !important; }
+        .type { -webkit-text-fill-color: currentColor !important; background: none !important; }
+      </style>
+    </noscript>
     <ClientRouter />
   </head>
   <body>
-    <a class="skip-link" href="#main">skip to content</a>
+    <a class="skip-link" href={skipTo}>skip to content</a>
+    <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
     <Header />
-    <main id="main">
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <Footer />
 
-    <button class="term-fab" data-term-open aria-label="Open terminal (backtick key)" title="terminal — press ` ">&gt;_</button>
+    <button
+      type="button"
+      class="term-fab"
+      data-term-open
+      aria-label="Open terminal"
+      aria-keyshortcuts="`"
+      title="terminal — press ` ">&gt;_</button>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
@@ -56,20 +203,3 @@ const fullTitle = title === site.title ? title : `${title} · ${site.name}`;
     </script>
   </body>
 </html>
-
-<style>
-  .skip-link {
-    position: fixed;
-    top: -60px;
-    left: 16px;
-    z-index: 5000;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    background: #000;
-    border: 1px solid var(--accent);
-    color: var(--text);
-    padding: 10px 16px;
-    transition: top 0.2s ease;
-  }
-  .skip-link:focus-visible { top: 12px; }
-</style>

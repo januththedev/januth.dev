@@ -39,6 +39,7 @@ export function tokenize(input: string): Token[] | null {
     if (ch === "'" || ch === '"') {
       const quote = ch;
       i++;
+      started = true; // '' and "" are real, empty arguments
       let closed = false;
       while (i < input.length) {
         if (input[i] === quote && quote === '"' && input[i - 1] === '\\') {
