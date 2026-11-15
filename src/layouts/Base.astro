@@ -5,6 +5,7 @@ import '@fontsource/jetbrains-mono/latin-700.css';
 import '../styles/global.css';
 import audiowideUrl from '@fontsource/audiowide/files/audiowide-latin-400-normal.woff2?url';
 import { ClientRouter } from 'astro:transitions';
+import Analytics from '@vercel/analytics/astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { site, formatWhen } from '../config/site';
@@ -179,6 +180,7 @@ const jsonLd = {
       </style>
     </noscript>
     <ClientRouter />
+    <Analytics />
   </head>
   <body>
     <a class="skip-link" href={skipTo}>skip to content</a>

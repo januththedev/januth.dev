@@ -145,7 +145,15 @@ export async function fetchRepos(
 ): Promise<{ repos: Repo[]; stats: RepoStats }> {
   const res = await fetch(
     `https://api.github.com/users/${username}/repos?sort=pushed&per_page=100`,
-    { headers: { Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(8000) }
+    {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        // build-time only: non-PUBLIC_ env vars never reach the browser bundle, so
+        // visitors fetch anonymously while builds use the token's 5000/hour limit
+        ...(import.meta.env.GITHUB_TOKEN ? { Authorization: `Bearer ${import.meta.env.GITHUB_TOKEN}` } : {}),
+      },
+      signal: AbortSignal.timeout(8000),
+    }
   );
   if (!res.ok) throw new Error(`GitHub API ${res.status}`);
   const own = ((await res.json()) as GhRepo[]).filter((r) => !r.fork && !r.archived);
