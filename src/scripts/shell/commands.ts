@@ -46,7 +46,7 @@ export const commands: Record<string, Command> = {
     usage: 'help [command]',
     run(args) {
       const name = args[0];
-      if (name && commands[name] && !commands[name].hidden) {
+      if (name && Object.hasOwn(commands, name) && !commands[name].hidden) {
         const c = commands[name];
         return `${pad(c.usage ?? name, 24)}${c.desc}`;
       }
@@ -149,31 +149,43 @@ export const commands: Record<string, Command> = {
   whoami: {
     desc: 'who runs this place',
     run() {
-      return `${site.name.toLowerCase()} — builder of this site.\nrole rotates hourly; today: professional tinkerer.`;
+      return `${site.name.toLowerCase()} — ${site.role}, ${site.location.toLowerCase()}.\nbuilds AI products, developer tools and sites like this one.`;
     },
   },
 
   contact: {
     desc: 'ways to reach me',
     run() {
-      return site.socials.map((s) => `${pad(s.label, 10)}${s.url}`).join('\n') + `\n${pad('email', 10)}${site.email}`;
+      return [
+        `${pad('email', 10)}${site.email}`,
+        ...site.socials.map((s) => `${pad(s.label, 10)}${s.url}`),
+        ...(site.availability ? ['', site.availability + '. try: sudo hire-me'] : []),
+      ].join('\n');
     },
   },
 
   repos: {
-    desc: 'live repo table from github (--sort stars)',
+    desc: 'live repo table from github',
     usage: 'repos [--lang <language>]',
     async run(args) {
       const { getRepos } = await import('../github');
       const langIdx = args.indexOf('--lang');
-      const langFilter = langIdx >= 0 ? args[langIdx + 1]?.toLowerCase() : null;
-      const { repos } = await getRepos();
+      if (langIdx >= 0 && !args[langIdx + 1]) return err('usage: repos --lang <language>  (e.g. repos --lang ts)');
+      const alias: Record<string, string> = { ts: 'typescript', js: 'javascript', py: 'python', rs: 'rust', kt: 'kotlin' };
+      const raw = langIdx >= 0 ? args[langIdx + 1].toLowerCase() : null;
+      const langFilter = raw ? (Object.hasOwn(alias, raw) ? alias[raw] : raw) : null;
+      const { repos, source } = await getRepos();
+      if (!repos.length) {
+        return source === 'error'
+          ? err(`couldn't reach github right now — see ${site.socials[0].url}`)
+          : 'no public repos yet.';
+      }
       const list = langFilter
         ? repos.filter((r) => (r.language ?? '').toLowerCase() === langFilter)
         : repos;
       if (!list.length) return `no repos matching ${langFilter}.`;
       return [
-        pad('REPO', 22) + pad('LANG', 13) + pad('★', 6) + 'NAME SAYS',
+        pad('REPO', 22) + pad('LANG', 13) + pad('★', 6) + 'DESCRIPTION',
         ...list.map((r) =>
           pad(r.name.slice(0, 20), 22) +
           pad((r.language ?? '—').slice(0, 12), 13) +
@@ -197,6 +209,17 @@ export const commands: Record<string, Command> = {
       return known.includes(name)
         ? `theme → ${name}`
         : `attempting "${name}"… if nothing happens, it doesn't exist. or does it.`;
+    },
+  },
+
+  cursor: {
+    desc: 'toggle the custom cursor',
+    usage: 'cursor <on|off>',
+    run(args) {
+      const mode = args[0]?.toLowerCase();
+      if (mode !== 'on' && mode !== 'off') return err('usage: cursor <on|off>');
+      document.dispatchEvent(new CustomEvent(mode === 'off' ? 'jn:disable-cursor' : 'jn:enable-cursor'));
+      return mode === 'off' ? 'native cursor restored.' : 'custom cursor back — move the mouse.';
     },
   },
 
@@ -228,11 +251,16 @@ export const commands: Record<string, Command> = {
     usage: '<cmd> | grep [-i] <pattern>',
     run(args, ctx) {
       if (ctx.pipeIn == null) return err('grep needs an upstream pipe — try: cat skills.txt | grep typescript');
-      const noIgnore = args.includes('-i');
+      const ignoreCase = args.includes('-i');
       const pattern = args.find((a) => !a.startsWith('-'));
       if (!pattern) return err('usage: … | grep [-i] pattern');
-      const flags = noIgnore ? 'i' : '';
-      return ctx.pipeIn.split('\n').filter((l) => new RegExp(pattern, flags).test(l)).join('\n') || '(no matches)';
+      let re: RegExp;
+      try {
+        re = new RegExp(pattern, ignoreCase ? 'i' : '');
+      } catch {
+        return err(`grep: invalid pattern: ${pattern}`);
+      }
+      return ctx.pipeIn.split('\n').filter((l) => re.test(l)).join('\n') || '(no matches)';
     },
   },
 

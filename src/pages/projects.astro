@@ -2,41 +2,41 @@
 import Base from '../layouts/Base.astro';
 import SectionHeading from '../components/SectionHeading.astro';
 import { site } from '../config/site';
+import { getBuildData } from '../lib/build-data';
+import { chipsHtml, languageChips, repoCard } from '../scripts/repo-card';
+
+// real cards rendered at build time; the browser refreshes them from the live API
+const { repos, stats } = await getBuildData();
+const gh = `https://github.com/${site.github.username}`;
 ---
 
 <Base
-  title="projects"
-  description="Live GitHub pulse — repos, languages and stats pulled straight from januththedev's GitHub."
+  title="projects — open-source work & experiments"
+  description={`${stats.repos} public repos by ${site.name}: the Orin AI ecosystem, developer tools and web experiments. Live from github.com/${site.github.username}.`}
 >
   <section class="section container page-head">
     <SectionHeading
-      kicker="02 — projects"
-      title={`the <span style="color:var(--accent)">live pulse</span>`}
-      sub={`pulled straight from github.com/${site.github.username} — stars, languages and last pushes, always current. no hand-maintained lists.`}
+      as="h1"
+      kicker="projects"
+      title={`the <span class="accent">live pulse</span>`}
+      sub={`my most recently active repos, pulled from github.com/${site.github.username} and refreshed in your browser. ${stats.live} of ${stats.repos} have a live deployment.`}
     />
 
-    <div class="chips" id="repo-filters" role="group" aria-label="Filter repositories by language"></div>
-    <div class="repo-grid" id="repo-grid" aria-live="polite">
-      <!-- skeletons while data loads -->
-      <div class="skeleton"></div>
-      <div class="skeleton"></div>
-      <div class="skeleton"></div>
-      <div class="skeleton"></div>
-      <div class="skeleton"></div>
-      <div class="skeleton"></div>
-    </div>
+    <div class="chips" id="repo-filters" role="group" aria-label="Filter repositories by language" set:html={repos.length ? chipsHtml(languageChips(repos)) : ''} />
+    <p id="repo-status" class="sr-only" role="status"></p>
+
+    {repos.length ? (
+      <div class="repo-grid" id="repo-grid" set:html={repos.map(repoCard).join('')} />
+    ) : (
+      <div class="repo-grid" id="repo-grid">
+        {Array.from({ length: 6 }).map(() => <div class="skeleton" />)}
+      </div>
+    )}
     <div id="data-badge-slot"></div>
 
-    <noscript>
-      <div class="card" style="padding:22px; margin-top:26px;">
-        <p style="margin:0;">
-          The live GitHub feed needs JavaScript. In the meantime,
-          everything lives at
-          <a href={`https://github.com/${site.github.username}`} style="color:var(--accent); text-decoration:underline;">
-            github.com/${site.github.username}
-          </a>.
-        </p>
-      </div>
-    </noscript>
+    <p class="repo-more mono">
+      that's the top of the pile. the rest is at
+      <a href={gh} target="_blank" rel="noopener noreferrer">github.com/{site.github.username}<span class="sr-only"> (opens in a new tab)</span></a>.
+    </p>
   </section>
 </Base>

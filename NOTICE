@@ -1,0 +1,16 @@
+januth.dev — personal portfolio of Januth Nimnal
+Copyright (c) Januth Nimnal
+
+Third-party software and assets used by this project:
+
+1. three.js (MIT) — https://threejs.org
+   Used for the landing page's WebGL stage.
+
+2. Audiowide and JetBrains Mono (SIL Open Font License 1.1), via Fontsource.
+
+3. @vercel/sandbox (Apache-2.0) — powers the real Linux shell.
+
+Everything else — the ASCII renderer and its glyph shader, the procedurally
+sculpted head and its mask-shatter, the intro sequence, the shell (tokenizer,
+parser, virtual filesystem, commands), the 404 game, the themes, the motion
+layer and the page design — is original work.

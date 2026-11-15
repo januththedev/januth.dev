@@ -1,116 +1,99 @@
 ---
 import { site } from '../config/site';
+import { getBuildData, yearsOnGithub } from '../lib/build-data';
 
-/** lowercase fragments revealed with the typed fill-wipe, house-style */
+const { stats, builtAt } = await getBuildData();
+const [first, ...rest] = site.name.split(' ');
+const last = rest.join(' ');
+
+/** the scroll beats that play over the head, before the mask breaks */
 const frags = ['a builder.', 'a creative coder.', 'a professional tinkerer.'];
+const jokes = [
+  { num: '100%', label: 'hand-built, zero templates', from: 0 },
+  { num: '0', label: 'boring sites made', from: 47 },
+  { num: '24/7', label: 'build mode', from: null },
+  { num: '∞', label: 'curiosity (unbounded)', from: null },
+];
 
-const stats = [
-  { num: '100%', label: 'hand-built, zero templates', countFrom: 0 },
-  { num: '0', label: 'boring sites made', countFrom: 47 },
-  { num: '24/7', label: 'build mode', countFrom: null },
-  { num: '∞', label: 'curiosity (unbounded)', countFrom: null },
+const facts = [
+  { num: stats.repos, label: 'public repos' },
+  { num: stats.live, label: 'deployed live' },
+  { num: yearsOnGithub(builtAt), label: 'years on github' },
 ];
 ---
 
-<div id="space">
-  <div class="stage" id="stage">
-    <div class="jn-ascii" id="jn-ascii" aria-hidden="true"></div>
+<!--
+  The landing. Everything visible here is real HTML; the canvas behind it is
+  decoration. Without JS (or with reduced motion) the hero simply shows.
+  The intro + mask-shatter choreography lives in scripts/landing/.
+-->
+<div id="landing" class="landing" data-phase="hero">
+  <script is:inline>
+    // first frame = the intro, never a flash of the hero underneath it
+    if (document.documentElement.classList.contains('intro-pending')) document.currentScript.parentElement.dataset.phase = 'jn';
+  </script>
+  <div class="l-stage">
+    <canvas id="ascii-canvas" class="l-canvas" aria-hidden="true"></canvas>
 
-    <div class="big-title" aria-hidden="true">{site.monogram}</div>
+    <div class="intro" aria-hidden="true">
+      <span class="intro-jn">{site.monogram}</span>
+      <p class="intro-line intro-hello"><span>Hello There!</span></p>
+      <p class="intro-line intro-name"><span>I'm <span class="accent">{site.name}</span></span></p>
+    </div>
 
-    <section class="panel" id="intro">
-      <div class="intro-box">
-        <h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">
-          {site.name} — portfolio
-        </h1>
-        {frags.map((f) => <span class="frag type">{f}</span>)}
-        <p class="create-line">
-          i love creating
-          <span class="create-rotator" id="create-rotator">
-            <span>cool things.</span>
-            <span>useful tools.</span>
-            <span>browser chaos.</span>
-            <span>this site.</span>
-          </span>
-        </p>
+    <section class="hero-id" aria-labelledby="hero-name">
+      <p class="hero-kicker mono">
+        <span class="live-dot" aria-hidden="true"></span>
+        {site.availability || `based in ${site.location}`}
+      </p>
+      <h1 class="hero-name" id="hero-name">
+        <span class="hn-line"><span>{first}</span></span>
+        <span class="hn-line"><span>{last}</span></span>
+      </h1>
+      <p class="hero-role">
+        {site.role} <span class="sep" aria-hidden="true">/</span> {site.location}
+        <span class="sep" aria-hidden="true">/</span> creator of
+        <a href="https://orinai.org" target="_blank" rel="noopener noreferrer">Orin AI<span class="sr-only"> (opens in a new tab)</span></a>
+      </p>
+      <div class="hero-actions">
+        <a class="cybtn" href="#work">see the work<span class="tag" aria-hidden="true">↓</span></a>
+        <a class="cybtn ghosted" href="#contact">get in touch</a>
       </div>
-    </section>
-
-    <section class="panel" id="data">
-      {stats.map((s) => (
-        <div class="data-container">
-          <div
-            class="data-number"
-            data-count-to={s.num}
-            data-count-from={s.countFrom ?? ''}
-          >
-            {s.num}
+      <dl class="hero-facts mono">
+        {facts.map((f) => (
+          <div>
+            <dt>{f.label}</dt>
+            <dd>{f.num}</dd>
           </div>
-          <div class="data-title">{s.label}</div>
-        </div>
-      ))}
+        ))}
+      </dl>
     </section>
 
-    <div id="alot" aria-hidden="true">that's a lot.</div>
+    <div class="beats" aria-hidden="true">
+      <div class="beat beat-frags" data-beat="0.06 0.24">
+        {frags.map((f, i) => <span class="frag" style={`--i:${i}`}>{f}</span>)}
+      </div>
+      <p class="beat beat-create" data-beat="0.24 0.41">
+        i love creating
+        <span class="create-rotator">
+          <span>cool things.</span>
+          <span>useful tools.</span>
+          <span>browser chaos.</span>
+          <span>this site.</span>
+        </span>
+      </p>
+      <div class="beat beat-data" data-beat="0.41 0.58">
+        {jokes.map((j, i) => (
+          <div class="data-item" style={`--i:${i}`}>
+            <span class="data-number" data-count-to={j.num} data-count-from={j.from ?? ''}>{j.num}</span>
+            <span class="data-title">{j.label}</span>
+          </div>
+        ))}
+      </div>
+      <p class="beat beat-alot" data-beat="0.6 0.97">that's a lot.</p>
+    </div>
 
-    <section class="panel" id="avatar">
-      <span class="ascii-caption">that's me — spinning, rendered in nothing but characters</span>
-    </section>
-
-    <div class="scroll-cue mono" aria-hidden="true">scroll ↓</div>
+    <button type="button" class="intro-skip mono" id="intro-skip">skip intro <span aria-hidden="true">→</span></button>
+    <a class="scroll-cue mono" href="#work">scroll <span aria-hidden="true">↓</span><span class="sr-only"> to the work</span></a>
   </div>
 </div>
-
-<div class="preloader" id="preloader" aria-hidden="true">
-  <div class="pre-inner">
-    <span class="pre-logo display">{site.monogram}</span>
-    <span class="mono" id="pre-count">0%</span>
-  </div>
-</div>
-
-<script>
-  // count-up when the data beat scrolls into view; counts DOWN on purpose for the joke stat
-  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-
-  function animate(el: HTMLElement) {
-    const to = el.dataset.countTo ?? '';
-    const fromRaw = el.dataset.countFrom ?? '';
-    if (!fromRaw || !/\d/.test(to)) return;
-    const toNum = parseInt(to.replace(/\D/g, ''), 10);
-    const fromNum = parseInt(fromRaw, 10);
-    const prefix = /^\D+/.exec(to)?.[0] ?? '';
-    const suffix = /\D+$/.exec(to)?.[0] ?? '';
-    const dur = 1400;
-    const start = performance.now();
-    const tick = (now: number) => {
-      if (!document.body.contains(el)) return;
-      const p = Math.min(1, (now - start) / dur);
-      el.textContent = `${prefix}${Math.round(fromNum + (toNum - fromNum) * ease(p))}${suffix}`;
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }
-
-  document.addEventListener('astro:page-load', () => {
-    const data = document.getElementById('data');
-    if (!data) return;
-    const nums = [...data.querySelectorAll<HTMLElement>('.data-number[data-count-from]:not([data-count-from=""])')];
-    if (!nums.length) return;
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-      nums.forEach((n) => (n.textContent = n.dataset.countTo ?? n.textContent));
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (!e.isIntersecting) continue;
-          nums.forEach(animate);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.4 }
-    );
-    io.observe(data);
-  });
-</script>

@@ -60,21 +60,26 @@ export function initGame404(): () => void {
       y: -12,
       vy: rand(90, 150) + score * 1.6,
       r: rand(5, 9),
-      hue: rand(170, 280),
+      hue: rand(120, 175),
     });
   };
 
   const gameOver = () => {
     playing = false;
+    drops = [];
+  };
+
+  /** start / game-over card; repainted every frame so trails can't erase it */
+  const overlay = (title: string, sub: string) => {
     ctx.fillStyle = 'rgba(5,5,8,0.72)';
     ctx.fillRect(0, 0, W, H);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ededf2';
-    ctx.font = '700 34px "Space Grotesk", sans-serif';
-    ctx.fillText('signal lost', W / 2, H / 2 - 14);
+    ctx.font = '34px Audiowide, sans-serif';
+    ctx.fillText(title, W / 2, H / 2 - 14);
     ctx.font = '13px "JetBrains Mono", monospace';
     ctx.fillStyle = '#9a9aa8';
-    ctx.fillText(`score ${score} — click or press space to retry`, W / 2, H / 2 + 18);
+    ctx.fillText(sub, W / 2, H / 2 + 18);
   };
 
   const draw = (dtMs: number) => {
@@ -132,18 +137,19 @@ export function initGame404(): () => void {
 
     // paddle
     const grad = ctx.createLinearGradient(paddleX - PADDLE_W / 2, 0, paddleX + PADDLE_W / 2, 0);
-    grad.addColorStop(0, '#22d3ee');
-    grad.addColorStop(1, '#8b5cf6');
+    grad.addColorStop(0, '#21dd84');
+    grad.addColorStop(1, '#c9cad2');
     ctx.fillStyle = grad;
-    ctx.shadowColor = 'rgba(34,211,238,0.6)';
+    ctx.shadowColor = 'rgba(33,221,132,0.6)';
     ctx.shadowBlur = 16;
     ctx.beginPath();
     ctx.roundRect(paddleX - PADDLE_W / 2, PADDLE_Y, PADDLE_W, PADDLE_H, 6);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    if (!playing && drops.length === 0 && lives <= 0) {
-      /* game-over overlay already painted */
+    if (!playing) {
+      if (lives <= 0) overlay('signal lost', `score ${score} — click or press space to retry`);
+      else overlay('catch the signal', 'click or press space to start');
     }
   };
 
@@ -163,18 +169,32 @@ export function initGame404(): () => void {
   const onPointerMove = (e: PointerEvent) => {
     targetX = pointerPos(e.clientX);
   };
-  const onPointerDown = () => {
-    if (!playing && lives <= 0) reset();
+  const onPointerDown = (e: PointerEvent) => {
+    targetX = pointerPos(e.clientX);
+    if (!playing) reset();
+  };
+  // never steal keys from a control — the terminal lives on this page too
+  const inControl = (e: KeyboardEvent): boolean => {
+    const t = e.target;
+    return (
+      t instanceof HTMLInputElement ||
+      t instanceof HTMLTextAreaElement ||
+      t instanceof HTMLButtonElement ||
+      t instanceof HTMLAnchorElement ||
+      (t instanceof HTMLElement && t.isContentEditable)
+    );
   };
   const onKeyDown = (e: KeyboardEvent) => {
+    if (!e.key || inControl(e)) return;
     if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = true;
     if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = true;
-    if (e.key === ' ' && !playing && lives <= 0) {
+    if (e.key === ' ' && !playing) {
       e.preventDefault();
       reset();
     }
   };
   const onKeyUp = (e: KeyboardEvent) => {
+    if (!e.key) return;
     if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') keys.left = false;
     if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') keys.right = false;
   };

@@ -16,3 +16,7 @@ pnpm-debug.log*
 # os
 .DS_Store
 Thumbs.db
+
+# vercel build output / local env
+.vercel/
+.env.local

@@ -32,34 +32,54 @@ function reposToJson(repos: Repo[]): string {
   return JSON.stringify(repos, null, 2);
 }
 
-export async function buildFs(): Promise<VDir> {
-  let repoBlock = '(loading…)';
-  let repoJson = '[]';
-  try {
-    const { repos } = await getRepos();
-    repoBlock = reposToText(repos);
-    repoJson = reposToJson(repos);
-  } catch {
-    repoBlock = 'github unreachable. even the virtual fs has outages.';
-  }
+const featuredText = (): string =>
+  site.featured
+    .map((p) => `${p.name}\n  ${p.oneLiner}\n  ${p.stack.join(' · ')}\n  ${p.liveUrl ?? p.repoUrl}`)
+    .join('\n\n');
+
+/**
+ * Builds the tree synchronously so `help`, `ls` and `cat` never wait on the
+ * network; the two repo files are filled in when GitHub answers.
+ */
+export function buildFs(): VDir {
+  const unreachable = `couldn't reach github right now. see ${site.socials[0].url}`;
+  const repoTxt = file('(fetching from github… try again in a second)');
+  const repoJsonFile = file('[]');
+  getRepos()
+    .then(({ repos, source }) => {
+      if (!repos.length) {
+        repoTxt.content = source === 'error' ? unreachable : 'no public repos yet.';
+        return;
+      }
+      repoTxt.content = reposToText(repos);
+      repoJsonFile.content = reposToJson(repos);
+    })
+    .catch(() => {
+      repoTxt.content = unreachable;
+    });
 
   return dir({
     'README.md': file(
       `# ${site.name}\n\nwelcome to the jn filesystem.\neverything you can read here is also on the site —\nthis is just the same place with fewer pixels.\n\ntry: ls -a · cat about.md · open projects · theme paper`
     ),
     'about.md': file(
-      `${site.name} — full-stack developer, creative coder, tinkerer.\n\ni think software should feel alive. by day: clean APIs,\nsane data models, interfaces that don't fight back.\nby night: particle systems, in-browser shells, games\nhidden behind 404s.\n\nfull story: open about`
+      `${site.name} — ${site.role}, ${site.location}.\n\ni build AI products, developer tools and interactive web\nexperiences — most of them under the Orin name.\n\ni think software should feel alive: this site has a real\nshell in it, and a game hidden behind its 404.\n\nfull story: open about      work: cat projects/featured.txt`
     ),
     'skills.txt': file(
-      'languages     typescript javascript python sql (+rust soon)\nfrontend      astro react three.js css wizardry canvas\nbackend       node.js rest apis linux docker basics\nexploring     shaders game dev systems design'
+      site.skills
+        .map((s) => `${s.group.padEnd(16)}${s.items.join(' · ').toLowerCase()}`)
+        .join('\n')
     ),
-    'contact.txt': file([...site.socials.map((s) => `${s.label}: ${s.url}`), `email: ${site.email}`].join('\n')),
+    'contact.txt': file(
+      [`email: ${site.email}`, ...site.socials.map((s) => `${s.label}: ${s.url}`)].join('\n')
+    ),
     projects: dir({
-      'repos.txt': file(repoBlock),
-      'repos.json': file(repoJson),
+      'featured.txt': file(featuredText()),
+      'repos.txt': repoTxt,
+      'repos.json': repoJsonFile,
     }),
     themes: dir({
-      'dark.theme': file('the house style. deep space + cyan/violet. (default)'),
+      'dark.theme': file('the house style. near-black, one accent: terminal green. (default)'),
       'paper.theme': file('light, editorial, ink on cream. try: theme paper'),
       'matrix.theme': file('hidden. some doors only open from the inside.'),
     }),
@@ -94,8 +114,9 @@ export function getNode(root: VDir, path: string): VNode | null {
   let node: VNode = root;
   for (const part of path.split('/').filter(Boolean)) {
     if (node.type !== 'dir') return null;
-    const next: VNode | undefined = node.children[part];
-    if (!next) return null;
+    // own-property check: `cat constructor` must not walk Object.prototype
+    if (!Object.hasOwn(node.children, part)) return null;
+    const next: VNode = node.children[part];
     node = next;
   }
   return node;

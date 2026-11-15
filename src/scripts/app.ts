@@ -1,144 +1,49 @@
-import { $, $$, prefersReducedMotion, showToast, clamp } from './lib/dom';
-import { cycleWords } from './scramble';
+import { $, safeStorage, showToast } from './lib/dom';
 import { initCardGlow, initReveal } from './reveal';
-import { initCursor } from './cursor';
+import { initCursor, reapplyCursor } from './cursor';
 import { initEggs } from './eggs';
+import { initFxGlobal, initFxPage, updateScrollProgress } from './fx';
 import { syncTerminalAfterSwap, initTerminalKeybinds } from './shell/terminal-ui';
 
 /**
  * Global bootstrapper.
  *
  * One-time inits attach document-level listeners (they survive view
- * transitions). Per-page work happens on astro:page-load: reveal animations,
- * hero particles, projects feed, the 404 game — each guarded by whether its
- * mount point exists on the current page. Heavy modules are dynamically
- * imported only when needed.
+ * transitions). Per-page work runs once per page: on first load and after
+ * every router swap — each piece guarded by whether its mount point exists.
+ * Heavy modules (three.js, the 404 game, the projects feed) are dynamically
+ * imported only on the pages that use them.
  */
 
 const THEMES = ['dark', 'paper', 'matrix', 'vaporwave'] as const;
 
+const savedTheme = (): string => {
+  const t = safeStorage(() => localStorage.getItem('jn:theme'), null) ?? 'dark';
+  return (THEMES as readonly string[]).includes(t) ? t : 'dark';
+};
+
 function applyTheme(name: string, announce = false): void {
   const theme = (THEMES as readonly string[]).includes(name) ? name : 'dark';
   document.documentElement.dataset.theme = theme;
-  try {
-    localStorage.setItem('jn:theme', theme);
-  } catch {}
+  safeStorage(() => localStorage.setItem('jn:theme', theme), undefined);
   if (announce) showToast(`theme → ${theme}`);
 }
 
+let stopLanding: (() => void) | null = null;
 let stopGame: (() => void) | null = null;
-let stopWords: (() => void) | null = null;
 
-/* ---------------- preloader ---------------- */
+/* ---------------- per-page features ---------------- */
 
-function runPreloader(): void {
-  const pre = $('#preloader');
-  if (!pre) return;
-
-  let seen = false;
-  try {
-    seen = !!sessionStorage.getItem('jn:pre-seen');
-    sessionStorage.setItem('jn:pre-seen', '1');
-  } catch {}
-
-  const finish = () => {
-    pre.classList.add('done');
-    window.setTimeout(() => pre.remove(), 700);
-  };
-
-  if (seen || prefersReducedMotion()) {
-    finish();
-    return;
-  }
-
-  const count = $('#pre-count');
-  const start = performance.now();
-  const DURATION = 950;
-  const tick = (now: number) => {
-    if (!document.body.contains(pre)) return; // navigated away mid-preload
-    const p = Math.min(1, (now - start) / DURATION);
-    if (count) count.textContent = `${Math.round(p * 100)}%`;
-    if (p < 1) requestAnimationFrame(tick);
-    else finish();
-  };
-  requestAnimationFrame(tick);
-}
-
-/* ---------------- per-page wiring ---------------- */
-
-/**
- * The elvis-mao-style scroll journey: one --t progress variable (0→1 over
- * the #space runway) drives every panel fade from CSS, feeds the ASCII head's
- * camera keyframes, and fires the typed fill-wipe past a threshold.
- */
-let journeyBound = false;
-function bindJourney(): void {
-  if (journeyBound) return;
-  const space = document.getElementById('space');
-  if (!space) return;
-  journeyBound = true;
-
-  let ticking = false;
-  const update = () => {
-    ticking = false;
-    const header = $('#site-header');
-    header?.classList.toggle('scrolled', scrollY > 40);
-
-    const runway = space.offsetHeight - innerHeight;
-    if (runway <= 0) return;
-    const t = clamp(scrollY / runway, 0, 1);
-    latestT = t;
-    document.documentElement.style.setProperty('--t', t.toFixed(4));
-    journeyHead?.setProgress(t);
-    if (t > 0.08) {
-      for (const el of $$('#intro .type')) el.classList.add('typed');
-    }
-  };
-  addEventListener(
-    'scroll',
-    () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(update);
-      }
-    },
-    { passive: true }
-  );
-  update();
-}
-
-interface JourneyHeadHandle {
-  setProgress(t: number): void;
-  dispose(): void;
-}
-
-let stopHead: (() => void) | null = null;
-let journeyHead: JourneyHeadHandle | null = null;
-let latestT = 0;
-
-/** the spinning ASCII head (three.js → AsciiEffect), lazily built on the landing */
-function setupHead(): void {
-  const container = $('#jn-ascii');
-  if (!container) return;
-  import('./journey/head').then(async ({ initJourneyHead }) => {
-    stopHead?.();
-    stopHead = null;
-    const head = await initJourneyHead(container);
-    if (!head) return;
-    journeyHead = head;
-    head.setProgress(latestT);
-    stopHead = () => {
-      head.dispose();
-      journeyHead = null;
-    };
+/** the landing intro + ASCII head + mask shatter (scripts/landing/) */
+function setupLanding(): void {
+  const root = $('#landing');
+  if (!root) return;
+  import('./landing/landing').then(({ initLanding }) => {
+    // the visitor may already have navigated on
+    if (!root.isConnected) return;
+    stopLanding?.();
+    stopLanding = initLanding(root);
   });
-}
-
-function setupWordRotator(): void {
-  const rotator = $('#create-rotator');
-  if (!rotator) return;
-  stopWords?.();
-  stopWords = cycleWords(rotator);
 }
 
 async function setupProjects(): Promise<void> {
@@ -155,26 +60,50 @@ function setupGame(): void {
   });
 }
 
+/* ---------------- scroll ---------------- */
+
+let scrollTicking = false;
+function onScrollFrame(): void {
+  scrollTicking = false;
+  $('#site-header')?.classList.toggle('scrolled', scrollY > 40);
+  updateScrollProgress();
+}
+
+function bindScroll(): void {
+  addEventListener(
+    'scroll',
+    () => {
+      if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame(onScrollFrame);
+      }
+    },
+    { passive: true }
+  );
+}
+
 /* ---------------- lifecycle ---------------- */
 
-function onPageLoad(): void {
-  // theme can be lost when the router swaps <html> attributes
-  try {
-    const t = localStorage.getItem('jn:theme');
-    if (t) document.documentElement.dataset.theme = t;
-    if (sessionStorage.getItem('jn:party')) document.body.classList.add('party');
-  } catch {}
+/** <html> attributes are wiped by every router swap — put ours back before paint */
+function restoreRootState(): void {
+  const root = document.documentElement;
+  root.classList.add('js');
+  root.dataset.theme = savedTheme();
+  reapplyCursor();
+  if (safeStorage(() => sessionStorage.getItem('jn:party'), null)) {
+    document.body.classList.add('party');
+  }
+}
 
+function onPageLoad(): void {
+  restoreRootState();
   initReveal();
-  runPreloader();
-  bindJourney();
-  setupHead();
-  setupWordRotator();
+  initFxPage();
+  setupLanding();
   void setupProjects();
   setupGame();
-
-  // footer clock + greeting
   updateClock();
+  onScrollFrame();
 }
 
 function updateClock(): void {
@@ -194,7 +123,7 @@ function updateClock(): void {
   };
   tick();
   const timer = window.setInterval(() => {
-    if (!document.body.contains(clock!)) {
+    if (!clock || !document.body.contains(clock)) {
       clearInterval(timer);
       return;
     }
@@ -209,41 +138,52 @@ function globalInit(): void {
   if (globalInitDone) return;
   globalInitDone = true;
 
-  applyTheme(localStorage.getItem('jn:theme') ?? 'dark');
+  applyTheme(savedTheme());
 
   document.addEventListener('jn:set-theme', (e) => {
     applyTheme((e as CustomEvent<string>).detail, true);
+  });
+  // `intro` in the shell replays the landing sequence
+  document.addEventListener('jn:replay-intro', () => {
+    safeStorage(() => sessionStorage.removeItem('jn:intro-seen'), undefined);
+    if (location.pathname === '/') location.reload();
+    else location.href = '/';
   });
 
   initCursor();
   initEggs();
   initCardGlow();
+  initFxGlobal();
   initTerminalKeybinds();
+  bindScroll();
 
-  document.addEventListener('astro:before-swap', () => {
-    stopHead?.();
-    stopGame?.();
-    stopWords?.();
-    stopHead = stopGame = stopWords = null;
-  });
-
-  // astro:page-load also fires on the very first load when the ClientRouter is
-  // active; the timestamp guard makes the manual fallback call harmless.
-  let lastLoadMs = -1000;
-  const guardedPageLoad = () => {
-    const now = Date.now();
-    if (now - lastLoadMs < 150) return;
-    lastLoadMs = now;
+  // Per-page init runs exactly once per page. `pageReady` is true while the
+  // current page has been initialised and is cleared right before each swap,
+  // so the router's own astro:page-load on first load is ignored when we have
+  // already run (it fires on window `load`, which can be seconds later).
+  let pageReady = false;
+  const runPage = () => {
+    if (pageReady) return;
+    pageReady = true;
     onPageLoad();
   };
 
-  document.addEventListener('astro:after-swap', syncTerminalAfterSwap);
-  document.addEventListener('astro:page-load', guardedPageLoad);
+  document.addEventListener('astro:before-swap', () => {
+    pageReady = false;
+    stopLanding?.();
+    stopGame?.();
+    stopLanding = stopGame = null;
+  });
+  document.addEventListener('astro:after-swap', () => {
+    restoreRootState();
+    syncTerminalAfterSwap();
+  });
+  document.addEventListener('astro:page-load', runPage);
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', guardedPageLoad, { once: true });
+    document.addEventListener('DOMContentLoaded', runPage, { once: true });
   } else {
-    guardedPageLoad();
+    runPage();
   }
 }
 

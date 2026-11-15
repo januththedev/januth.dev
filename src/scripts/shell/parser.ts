@@ -23,14 +23,18 @@ export function parse(line: string): PipedCmd[] | null {
     current = [];
   };
 
+  let openPipe = false; // a pipe still waiting for its right-hand command
   for (const t of tokens as Token[]) {
     if (t.kind === 'pipe') {
-      if (!current.length) return null; // leading/trailing/double pipe
+      if (!current.length) return null; // leading or double pipe
       pushSegment();
+      openPipe = true;
     } else {
       current.push(t.value);
+      openPipe = false;
     }
   }
+  if (openPipe) return null; // trailing pipe: `echo hi |`
   pushSegment();
 
   return segments.length ? segments : null;

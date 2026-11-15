@@ -26,13 +26,15 @@ export const prefersReducedMotion = (): boolean =>
 
 export const isCoarsePointer = (): boolean => matchMedia('(pointer: coarse)').matches;
 
-export function escapeHtml(s: string): string {
-  return s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+export { escapeHtml } from '../repo-card';
+
+/** run `fn` now if storage is reachable; storage can throw in locked-down browsers */
+export function safeStorage<T>(fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch {
+    return fallback;
+  }
 }
 
 let toastTimer = 0;

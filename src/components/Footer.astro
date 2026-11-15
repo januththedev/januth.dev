@@ -1,32 +1,40 @@
 ---
 import { site } from '../config/site';
 const year = new Date().getFullYear(); // build-time fallback; JS keeps it current
+const newTab = { target: '_blank', rel: 'noopener noreferrer' };
 ---
 
-<footer class="site-footer">
+<footer class="site-footer" id="contact" tabindex="-1">
   <div class="contact-wrap container">
     <div class="contact">
-      <div>
-        <span class="kicker">03 — contact</span>
-        <h2>let's build something<br /><span style="color:var(--accent)">worth staring at.</span></h2>
-        <p>inbox always open — ideas, collabs, or just to argue about tabs vs spaces.</p>
-        <div class="contact-actions">
-          <a class="cybtn" href={`mailto:${site.email}`}>say hello<span class="tag">mail</span></a>
-          <a class="cybtn ghosted" href={site.socials[0].url} target="_blank" rel="noopener noreferrer">github<span class="tag">↗</span></a>
-        </div>
-        <div class="social-links">
-          <a href="/projects/">projects</a>
-          <a href="/about/">about</a>
-          {site.socials.map((s) => (
-            <a href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a>
-          ))}
-        </div>
+      <span class="kicker">contact</span>
+      <h2 data-split data-reveal>let's build something<br /><span class="accent">worth staring at.</span></h2>
+      <p>
+        {site.availability ? `${site.availability}. ` : ''}based in {site.location} — the inbox is
+        always open.
+      </p>
+      <a class="contact-mail" href={`mailto:${site.email}`}>{site.email}</a>
+      <div class="contact-actions">
+        <a class="cybtn" href={`mailto:${site.email}`}>say hello<span class="tag" aria-hidden="true">mail</span></a>
+        {site.cvUrl && (
+          <a class="cybtn ghosted" href={site.cvUrl} download>download cv<span class="tag" aria-hidden="true">pdf</span></a>
+        )}
+        {site.socials.map((s) => (
+          <a class="cybtn ghosted" href={s.url} {...newTab}>
+            {s.label}<span class="tag" aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span>
+          </a>
+        ))}
       </div>
+      <nav class="social-links" aria-label="Footer">
+        <a href="/">home</a>
+        <a href="/projects/">projects</a>
+        <a href="/about/">about</a>
+      </nav>
     </div>
   </div>
 
   <div class="container foot-base">
-    <span>© <span id="foot-year">{year}</span> {site.name} — hand-built, no templates</span>
+    <span>© <span id="foot-year">{year}</span> {site.name} — no UI frameworks, just code</span>
     <span class="hint">psst — press <kbd>`</kbd> anywhere and type <kbd>help</kbd></span>
     <span><span id="foot-greeting">hello</span>, visitor · your time <span id="foot-clock">--:--</span></span>
   </div>

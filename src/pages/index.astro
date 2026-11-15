@@ -2,28 +2,126 @@
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import SectionHeading from '../components/SectionHeading.astro';
-import { site } from '../config/site';
+import { site, formatWhen } from '../config/site';
+import { getBuildData } from '../lib/build-data';
+
+const { stats } = await getBuildData();
+const newTab = { target: '_blank', rel: 'noopener noreferrer' };
+const pad = (n: number) => String(n + 1).padStart(2, '0');
+
+/** the moving band between sections: the stack, straight from site.skills */
+const band = site.skills.flatMap((s) => s.items).filter((s) => !s.includes('('));
+
+const lanes = [
+  {
+    title: 'AI products',
+    blurb: 'Chat workspaces, model routing, MCP servers and agents — the whole Orin ecosystem.',
+    href: 'https://orinai.org',
+    cta: 'orinai.org',
+    external: true,
+  },
+  {
+    title: 'developer tools',
+    blurb: 'A real Linux terminal in the browser, a CLI and a VS Code extension. Tools I wanted to exist.',
+    href: 'https://orin-console-lac.vercel.app',
+    cta: 'try orin console',
+    external: true,
+  },
+  {
+    title: 'interactive web',
+    blurb: 'Sites that respond: this one has a hand-rolled shell, a WebGL ASCII renderer and a game behind its 404.',
+    href: '/projects/',
+    cta: `all ${stats.repos} repos`,
+    external: false,
+  },
+];
 ---
 
-<Base>
+<Base skipTo="#work">
   <Hero />
 
-  <section class="section container" id="work">
+  <section class="section container work-section" id="work" tabindex="-1">
     <SectionHeading
       kicker="01 — selected work"
-      title={`things i've <span style="color:var(--accent)">made</span>`}
-      sub="a taste of what keeps me up at night. the full, always-current list lives on the projects page — pulled straight from GitHub."
+      title={`things i've <span class="accent">shipped</span>`}
+      sub="four projects worth your time. each one is live or open source — nothing here is a mock-up."
+    />
+
+    <div class="work" id="work-list">
+      <ol class="work-rows">
+        {site.featured.map((p, i) => (
+          <li class="work-row" data-index={i} data-reveal style={`--i:${i}`}>
+            <span class="wr-num mono" aria-hidden="true">{pad(i)}</span>
+            <div class="wr-main">
+              <h3>
+                <a href={p.liveUrl ?? p.repoUrl} {...newTab}>
+                  {p.name}<span class="sr-only"> (opens in a new tab)</span>
+                </a>
+              </h3>
+              <p class="wr-line">{p.oneLiner}</p>
+              <p class="wr-detail">{p.detail}</p>
+              {p.image && (
+                <img class="wr-thumb" src={p.image} alt={`Screenshot of ${p.name}`} width="1280" height="800" loading="lazy" decoding="async" />
+              )}
+            </div>
+            <div class="wr-side">
+              <ul class="wr-stack" aria-label="stack">
+                {p.stack.map((s) => <li>{s}</li>)}
+              </ul>
+              <span class="wr-when mono">{formatWhen(p.since)}</span>
+              <div class="wr-links mono">
+                {p.liveUrl && (
+                  <a href={p.liveUrl} {...newTab}>live<span aria-hidden="true"> ↗</span><span class="sr-only"> site for {p.name} (opens in a new tab)</span></a>
+                )}
+                <a href={p.repoUrl} {...newTab}>code<span aria-hidden="true"> ↗</span><span class="sr-only"> for {p.name} on GitHub (opens in a new tab)</span></a>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <!-- floats after the cursor on hover (fx.ts); decorative, so hidden from AT -->
+      <div class="work-preview" id="work-preview" aria-hidden="true">
+        {site.featured.map((p, i) => (
+          <div class="wp-pane" data-index={i}>
+            {p.image ? (
+              <img src={p.image} alt="" width="1280" height="800" loading="lazy" decoding="async" />
+            ) : (
+              <div class="wp-type">
+                <span class="wp-type-num mono">{pad(i)}</span>
+                <span class="wp-type-name">{p.name}</span>
+                <span class="wp-type-stack mono">{p.stack.join(' · ')}</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <a class="more-link mono" href="/projects/">all {stats.repos} repos, live from github →</a>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track" id="marquee-track">
+      {[0, 1].map(() => band.map((item) => <span class="mq-item">{item}<i>✦</i></span>))}
+    </div>
+  </div>
+
+  <section class="section container" id="lanes">
+    <SectionHeading
+      kicker="02 — what i build"
+      title={`three lanes, <span class="accent">one obsession</span>`}
+      sub="software that feels alive — whether it's a model router or a spinning wall of characters."
     />
     <div class="teaser-grid">
-      {site.curated.map((c, i) => (
-        <a class="teaser" href={c.href} style={`--i:${i + 1}`} data-reveal data-cursor>
-          <span class="t-kicker mono">{c.kicker}</span>
+      {lanes.map((c, i) => (
+        <a class="teaser" href={c.href} style={`--i:${i + 1}`} data-reveal data-cursor {...(c.external ? newTab : {})}>
+          <span class="t-kicker mono" aria-hidden="true">{pad(i)}</span>
           <h3>{c.title}</h3>
           <p>{c.blurb}</p>
-          <span class="t-cta">{c.cta}</span>
+          <span class="t-cta">{c.cta}{c.external && <span class="sr-only"> (opens in a new tab)</span>}</span>
         </a>
       ))}
     </div>
-    <a class="more-link mono" href="/projects/">every repo i've pushed → live from github</a>
   </section>
 </Base>
